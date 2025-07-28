@@ -1,4 +1,6 @@
 import os
+import argparse
+import glob
 from tree_sitter import Language, Parser
 from transformers import AutoTokenizer
 import pandas as pd
@@ -7,13 +9,24 @@ import matplotlib.pyplot as plt
 
 # --- 1. 配置 ---
 # 可以测试多个模型，尤其是为代码优化的模型
-MODELS_TO_TEST = [
+DEFAULT_MODELS = [
     "gpt2",                         # 通用模型作为基线
     "codellama/CodeLlama-7b-hf",    # Meta专门为代码优化的模型
     "bigcode/starcoder2-3b"         # BigCode项目（ServiceNow & Hugging Face）
 ]
-CODE_SAMPLE_PATH = "code_samples/example.py"
-TARGET_LANGUAGE = "python"
+DEFAULT_CODE_PATH = "code_samples"
+DEFAULT_LANGUAGE = "python"
+
+# --- 解析命令行参数 ---
+def parse_args():
+    """解析命令行参数"""
+    parser = argparse.ArgumentParser(description="分析LLM分词器与语法边界的对齐程度")
+    parser.add_argument("--model", "-m", type=str, help="指定要测试的模型名称，如gpt2")
+    parser.add_argument("--code_path", "-c", type=str, default=DEFAULT_CODE_PATH, 
+                        help=f"指定代码文件或文件夹路径 (默认: {DEFAULT_CODE_PATH})")
+    parser.add_argument("--language", "-l", type=str, default=DEFAULT_LANGUAGE,
+                        help=f"指定代码语言 (默认: {DEFAULT_LANGUAGE})")
+    return parser.parse_args()
 
 
 # --- 2. 初始化 Tree-sitter 解析器 ---
@@ -75,21 +88,11 @@ def get_tokenizer_token_boundaries(model_name: str, code_string: str) -> set:
     return boundaries
 
 # --- 5. 主分析流程 ---
-def main():
-    """主函数，执行分析并生成报告"""
-    print("开始分析...")
+def analyze_file(file_path, parser, models_to_test):
+    """分析单个文件"""
+    print(f"\n分析文件: {file_path}")
     
-    # 确保build目录存在
-    os.makedirs("build", exist_ok=True)
-    
-    # 克隆tree-sitter-python仓库（如果不存在）
-    if not os.path.exists("vendor/tree-sitter-python"):
-        print("克隆tree-sitter-python仓库...")
-        os.system("git clone https://github.com/tree-sitter/tree-sitter-python.git vendor/tree-sitter-python")
-    
-    parser = setup_tree_sitter_parser(TARGET_LANGUAGE)
-    
-    with open(CODE_SAMPLE_PATH, "rb") as f:
+    with open(file_path, "rb") as f:
         code_bytes = f.read()
     code_string = code_bytes.decode("utf-8")
     
@@ -97,9 +100,9 @@ def main():
     grammar_boundaries = get_grammar_node_boundaries(parser, code_bytes)
     print(f"从tree-sitter找到{len(grammar_boundaries)}个唯一语法边界。")
     
-    results = []
+    file_results = []
     
-    for model_name in MODELS_TO_TEST:
+    for model_name in models_to_test:
         print(f"\n--- 分析模型: {model_name} ---")
         try:
             tokenizer_boundaries = get_tokenizer_token_boundaries(model_name, code_string)
@@ -112,7 +115,8 @@ def main():
             if grammar_boundaries:
                 alignment_score = (1 - len(mismatched_boundaries) / len(grammar_boundaries)) * 100
             
-            results.append({
+            file_results.append({
+                "file_name": os.path.basename(file_path),
                 "model_name": model_name,
                 "grammar_boundaries": len(grammar_boundaries),
                 "tokenizer_boundaries": len(tokenizer_boundaries),
@@ -124,13 +128,62 @@ def main():
             
         except Exception as e:
             print(f"无法处理{model_name}。错误: {e}")
+    
+    return file_results
 
+def main():
+    """主函数，执行分析并生成报告"""
+    args = parse_args()
+    print("开始分析...")
+    
+    # 确保build目录存在
+    os.makedirs("build", exist_ok=True)
+    
+    # 确定要测试的模型
+    models_to_test = [args.model] if args.model else DEFAULT_MODELS
+    
+    # 确定语言和解析器
+    language = args.language
+    
+    # 克隆tree-sitter语言仓库（如果不存在）
+    repo_path = f"vendor/tree-sitter-{language}"
+    if not os.path.exists(repo_path):
+        print(f"克隆tree-sitter-{language}仓库...")
+        os.system(f"git clone https://github.com/tree-sitter/tree-sitter-{language}.git {repo_path}")
+    
+    parser = setup_tree_sitter_parser(language)
+    
+    # 确定要分析的文件
+    code_path = args.code_path
+    all_results = []
+    
+    if os.path.isdir(code_path):
+        # 如果是目录，分析目录中所有相应语言的文件
+        file_extension = ".py" if language == "python" else f".{language}"
+        code_files = glob.glob(os.path.join(code_path, f"*{file_extension}"))
+        
+        if not code_files:
+            print(f"在{code_path}中没有找到{file_extension}文件")
+            return
+            
+        for file_path in code_files:
+            file_results = analyze_file(file_path, parser, models_to_test)
+            all_results.extend(file_results)
+    else:
+        # 如果是单个文件
+        if not os.path.exists(code_path):
+            print(f"文件{code_path}不存在")
+            return
+            
+        file_results = analyze_file(code_path, parser, models_to_test)
+        all_results.extend(file_results)
+    
     # --- 6. 生成报告和可视化 ---
-    if not results:
+    if not all_results:
         print("没有结果可报告。")
         return
         
-    df = pd.DataFrame(results)
+    df = pd.DataFrame(all_results)
     
     # 创建结果目录
     os.makedirs("results", exist_ok=True)
@@ -140,19 +193,36 @@ def main():
     df.to_csv(report_path, index=False)
     print(f"\n完整报告已保存到{report_path}")
 
-    # 可视化
-    df_sorted = df.sort_values("alignment_score_percent", ascending=False)
+    # 按模型分组计算平均对齐分数
+    model_avg = df.groupby('model_name')['alignment_score_percent'].mean().reset_index()
+    model_avg_sorted = model_avg.sort_values("alignment_score_percent", ascending=False)
+    
+    # 可视化 - 模型平均对齐分数
     plt.figure(figsize=(12, 7))
-    sns.barplot(x="alignment_score_percent", y="model_name", data=df_sorted, palette="viridis", hue="model_name", dodge=False)
-    plt.title("LLM分词器与Tree-sitter语法边界对齐分析")
+    sns.barplot(x="alignment_score_percent", y="model_name", data=model_avg_sorted, palette="viridis", hue="model_name", dodge=False)
+    plt.title("LLM分词器与Tree-sitter语法边界对齐分析 (模型平均)")
     plt.xlabel("对齐分数 (%)")
     plt.ylabel("模型")
     plt.xlim(0, 100)
     plt.tight_layout()
     
-    chart_path = "results/alignment_chart.png"
+    chart_path = "results/alignment_chart_by_model.png"
     plt.savefig(chart_path)
-    print(f"图表已保存到{chart_path}")
+    print(f"模型对比图表已保存到{chart_path}")
+    
+    # 如果分析了多个文件，还可以按文件生成图表
+    if len(df['file_name'].unique()) > 1:
+        plt.figure(figsize=(14, 8))
+        sns.barplot(x="alignment_score_percent", y="file_name", hue="model_name", data=df, palette="viridis")
+        plt.title("各文件的模型对齐分数对比")
+        plt.xlabel("对齐分数 (%)")
+        plt.ylabel("文件")
+        plt.xlim(0, 100)
+        plt.tight_layout()
+        
+        file_chart_path = "results/alignment_chart_by_file.png"
+        plt.savefig(file_chart_path)
+        print(f"文件对比图表已保存到{file_chart_path}")
 
 
 if __name__ == "__main__":

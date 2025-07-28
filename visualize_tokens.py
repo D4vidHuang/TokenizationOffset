@@ -74,13 +74,12 @@ def visualize_tokens(model_name, code_string):
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("用法: python visualize_tokens.py <model_name> [code_file]")
-        print("例如: python visualize_tokens.py gpt2 code_samples/example.py")
+        print("Using: python visualize_tokens.py <model_name> [code_file]")
+        print("E.g.: python visualize_tokens.py gpt2 code_samples/example.py")
         sys.exit(1)
         
     model_name = sys.argv[1]
     
-    # 从文件读取代码或使用示例代码
     if len(sys.argv) > 2:
         with open(sys.argv[2], 'r') as f:
             code = f.read()
