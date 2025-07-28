@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 def setup_tree_sitter_parser(language_name: str) -> Parser:
-    """Compile and load tree-sitter parser for the specified language"""
+    """编译并加载指定语言的tree-sitter解析器"""
     library_path = 'build/languages.so'
     repo_path = f'vendor/tree-sitter-{language_name}'
     
@@ -24,7 +24,7 @@ def setup_tree_sitter_parser(language_name: str) -> Parser:
     return parser
 
 def get_node_details(node, code_bytes):
-    """Get detailed information about the node"""
+    """获取节点的详细信息"""
     return {
         "type": node.type,
         "start_byte": node.start_byte,
@@ -35,14 +35,14 @@ def get_node_details(node, code_bytes):
     }
 
 def analyze_grammar_structure(parser, code_bytes):
-    """Analyze the grammatical structure of code, return detailed node information"""
+    """分析代码的语法结构，返回详细的节点信息"""
     tree = parser.parse(code_bytes)
     
     # 收集所有节点信息
     nodes_info = []
     
     def traverse(node, depth=0):
-        if node.start_byte != node.end_byte:  # Skip empty nodes
+        if node.start_byte != node.end_byte:  # 跳过空节点
             nodes_info.append({
                 **get_node_details(node, code_bytes),
                 "depth": depth
@@ -55,13 +55,13 @@ def analyze_grammar_structure(parser, code_bytes):
     return nodes_info
 
 def analyze_tokenization(model_name, code_string):
-    """Analyze the tokenization results of the model"""
+    """分析模型的分词结果"""
     tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
     encoding = tokenizer(code_string, return_offsets_mapping=True)
     
     tokens_info = []
     for i, (start, end) in enumerate(encoding['offset_mapping']):
-        if start != end:  # Skip special tokens
+        if start != end:  # 跳过特殊标记
             token = tokenizer.convert_ids_to_tokens([encoding['input_ids'][i]])[0]
             tokens_info.append({
                 "token": token,
@@ -73,8 +73,8 @@ def analyze_tokenization(model_name, code_string):
     return tokens_info
 
 def find_misalignments(grammar_nodes, token_boundaries):
-    """Find misalignments between grammar nodes and tokenization boundaries"""
-    # Collect all tokenization boundaries
+    """找出语法节点与分词边界的错位情况"""
+    # 收集所有分词边界
     token_boundary_points = set()
     for start, end in token_boundaries:
         token_boundary_points.add(start)
@@ -96,7 +96,7 @@ def find_misalignments(grammar_nodes, token_boundaries):
     return misalignments
 
 def analyze_node_types(misalignments):
-    """Analyze which types of nodes are most prone to misalignment"""
+    """分析哪些类型的节点最容易发生错位"""
     type_counts = {}
     for node in misalignments:
         node_type = node["type"]
@@ -107,51 +107,51 @@ def analyze_node_types(misalignments):
     return type_counts
 
 def main():
-    """Main function, performs detailed analysis"""
-    print("Starting detailed analysis...")
+    """主函数，执行详细分析"""
+    print("开始详细分析...")
     
-    # Ensure build directory exists
+    # 确保build目录存在
     os.makedirs("build", exist_ok=True)
     os.makedirs("results", exist_ok=True)
     
-    # Clone tree-sitter-python repository (if it doesn't exist)
+    # 克隆tree-sitter-python仓库（如果不存在）
     if not os.path.exists("vendor/tree-sitter-python"):
-        print("Cloning tree-sitter-python repository...")
+        print("克隆tree-sitter-python仓库...")
         os.system("git clone https://github.com/tree-sitter/tree-sitter-python.git vendor/tree-sitter-python")
     
-    # Set up parser
+    # 设置解析器
     parser = setup_tree_sitter_parser("python")
     
-    # Read code sample
+    # 读取代码样本
     code_path = "code_samples/example.py"
     with open(code_path, "rb") as f:
         code_bytes = f.read()
     code_string = code_bytes.decode("utf-8")
     
-    # Analyze grammatical structure
-    print("Analyzing grammatical structure...")
+    # 分析语法结构
+    print("分析语法结构...")
     grammar_nodes = analyze_grammar_structure(parser, code_bytes)
-    print(f"Found {len(grammar_nodes)} grammar nodes")
+    print(f"找到{len(grammar_nodes)}个语法节点")
     
-    # Models to analyze
+    # 要分析的模型
     models = ["gpt2", "codellama/CodeLlama-7b-hf", "bigcode/starcoder2-3b"]
     
     all_results = []
     
     for model_name in models:
-        print(f"\nAnalyzing model: {model_name}")
+        print(f"\n分析模型: {model_name}")
         try:
-            # Analyze tokenization
+            # 分析分词
             tokens_info = analyze_tokenization(model_name, code_string)
             token_boundaries = [(token["start_byte"], token["end_byte"]) for token in tokens_info]
             
-            # Find misalignments
+            # 找出错位
             misalignments = find_misalignments(grammar_nodes, token_boundaries)
             
-            # Analyze misaligned node types
+            # 分析错位的节点类型
             type_counts = analyze_node_types(misalignments)
             
-            # Calculate misalignment rate
+            # 计算错位率
             misalignment_rate = len(misalignments) / len(grammar_nodes) * 100
             
             result = {
@@ -164,11 +164,11 @@ def main():
             
             all_results.append(result)
             
-            print(f"Total nodes: {len(grammar_nodes)}")
-            print(f"Misaligned nodes: {len(misalignments)}")
-            print(f"Misalignment rate: {misalignment_rate:.2f}%")
+            print(f"总节点数: {len(grammar_nodes)}")
+            print(f"错位节点数: {len(misalignments)}")
+            print(f"错位率: {misalignment_rate:.2f}%")
             
-            # Save detailed results
+            # 保存详细结果
             with open(f"results/{model_name.replace('/', '_')}_detailed.json", "w") as f:
                 json.dump({
                     "grammar_nodes": grammar_nodes,
@@ -178,20 +178,20 @@ def main():
                 }, f, indent=2)
             
         except Exception as e:
-            print(f"Error analyzing {model_name}: {e}")
+            print(f"分析{model_name}时出错: {e}")
     
-    # Create comparison charts
+    # 创建比较图表
     if all_results:
-        # Misalignment rate comparison
+        # 错位率比较
         plt.figure(figsize=(10, 6))
         df = pd.DataFrame([(r["model"], r["misalignment_rate"]) for r in all_results], 
                           columns=["Model", "Misalignment Rate (%)"])
         sns.barplot(x="Misalignment Rate (%)", y="Model", data=df, palette="viridis")
-        plt.title("Grammar-Tokenization Misalignment Rate for Different Models")
+        plt.title("不同模型的语法-分词错位率")
         plt.tight_layout()
         plt.savefig("results/misalignment_rates.png")
         
-        # Node type analysis
+        # 节点类型分析
         for result in all_results:
             model = result["model"].replace('/', '_')
             if result["type_counts"]:
@@ -199,23 +199,23 @@ def main():
                 types = list(result["type_counts"].keys())
                 counts = list(result["type_counts"].values())
                 
-                # Sort by count
+                # 按计数排序
                 sorted_indices = sorted(range(len(counts)), key=lambda i: counts[i], reverse=True)
                 types = [types[i] for i in sorted_indices]
                 counts = [counts[i] for i in sorted_indices]
                 
-                # Only show top 15 types
+                # 只显示前15种类型
                 if len(types) > 15:
                     types = types[:15]
                     counts = counts[:15]
                 
                 sns.barplot(x=counts, y=types, palette="viridis")
-                plt.title(f"Most Frequently Misaligned Node Types in {model}")
-                plt.xlabel("Number of Misaligned Nodes")
+                plt.title(f"{model} 模型中错位最多的节点类型")
+                plt.xlabel("错位节点数")
                 plt.tight_layout()
                 plt.savefig(f"results/{model}_node_types.png")
     
-    print("\nDetailed analysis complete. Results saved in the results directory.")
+    print("\n详细分析完成。结果保存在results目录中。")
 
 if __name__ == "__main__":
     main()

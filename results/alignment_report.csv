@@ -1,4 +1,0 @@
-model_name,grammar_boundaries,tokenizer_boundaries,mismatched_boundaries,alignment_score_percent
-gpt2,133,196,46,65.41353383458647
-codellama/CodeLlama-7b-hf,133,155,43,67.66917293233084
-bigcode/starcoder2-3b,133,136,43,67.66917293233084
