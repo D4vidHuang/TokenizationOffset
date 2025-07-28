@@ -42,6 +42,13 @@ def setup_tree_sitter_parser(language_name: str) -> Parser:
     if not os.path.exists(repo_path):
         raise FileNotFoundError(f"Tree-sitter grammar for {language_name} not found in {repo_path}")
     
+    # 获取仓库信息
+    repo_info = get_tree_sitter_repo_info(language_name)
+    
+    # 确保每次都重新构建库文件
+    if os.path.exists(library_path):
+        os.remove(library_path)
+    
     # 特殊语言处理
     if language_name == "typescript":
         # TypeScript需要指定tsx或ts
@@ -54,15 +61,52 @@ def setup_tree_sitter_parser(language_name: str) -> Parser:
         )
         # 默认使用typescript而不是tsx
         lang = Language(library_path, "typescript")
+    elif repo_info.get('custom_build', False):
+        # 对于需要自定义构建的语言
+        print(f"使用自定义构建流程构建{language_name}语言库...")
+        
+        # 确保目录存在
+        os.makedirs(os.path.dirname(library_path), exist_ok=True)
+        
+        # 使用通用的自定义构建命令
+        build_commands = [
+            f"cd {repo_path} && npm install",
+            f"cd {repo_path} && npx tree-sitter generate",
+            f"cd {repo_path} && gcc -shared -o {os.path.abspath(library_path)} -fPIC src/parser.c -I./src"
+        ]
+        
+        for cmd in build_commands:
+            print(f"执行: {cmd}")
+            result = os.system(cmd)
+            if result != 0:
+                raise Exception(f"执行命令失败: {cmd}")
+        
+        # 加载构建好的库
+        lang = Language(library_path, language_name)
     else:
-        # 确保每次都重新构建库文件
-        if os.path.exists(library_path):
-            os.remove(library_path)
-            
-        Language.build_library(
-            library_path,
-            [repo_path]
-        )
+        try:
+            Language.build_library(
+                library_path,
+                [repo_path]
+            )
+        except Exception as e:
+            print(f"构建语言库时出错: {e}")
+            print("尝试使用兼容性模式...")
+            # 如果构建失败，尝试使用兼容性模式
+            try:
+                # 尝试使用npm和tree-sitter CLI
+                os.system(f"cd {repo_path} && npm install")
+                os.system(f"cd {repo_path} && npx tree-sitter generate")
+                os.system(f"cd {repo_path} && gcc -shared -o {os.path.abspath(library_path)} -fPIC src/parser.c -I./src")
+            except Exception:
+                # 如果上面失败，尝试使用make
+                os.system(f"cd {repo_path} && make")
+                # 尝试复制生成的库文件
+                for ext in ['.so', '.dylib', '.dll']:
+                    lib_file = f"{repo_path}/libtree-sitter-{language_name}{ext}"
+                    if os.path.exists(lib_file):
+                        os.system(f"cp {lib_file} {library_path}")
+                        break
         
         # 对于C#，tree-sitter使用c_sharp作为语言标识符
         if language_name == "csharp":
@@ -165,26 +209,45 @@ def get_tree_sitter_repo_info(language):
     # 默认仓库信息
     default_info = {
         'repo_url': f"https://github.com/tree-sitter/tree-sitter-{language}.git",
-        'local_name': f"tree-sitter-{language}"
+        'local_name': f"tree-sitter-{language}",
+        'specific_version': None,  # 默认使用最新版本
+        'custom_build': False      # 默认不需要自定义构建
     }
     
     # 特殊情况处理
     special_cases = {
+        "c": {
+            'repo_url': "https://github.com/tree-sitter/tree-sitter-c.git",
+            'local_name': "tree-sitter-c",
+            'specific_version': "v0.20.2",  # 使用兼容版本
+            'custom_build': False
+        },
         "cpp": {
             'repo_url': "https://github.com/tree-sitter/tree-sitter-cpp.git",
-            'local_name': "tree-sitter-cpp"
+            'local_name': "tree-sitter-cpp",
+            'specific_version': "v0.20.0",  # 使用兼容版本
+            'custom_build': False
         },
         "csharp": {
             'repo_url': "https://github.com/tree-sitter/tree-sitter-c-sharp.git",
-            'local_name': "tree-sitter-c-sharp"
+            'local_name': "tree-sitter-c-sharp",
+            'custom_build': False
         },
         "typescript": {
             'repo_url': "https://github.com/tree-sitter/tree-sitter-typescript.git",
-            'local_name': "tree-sitter-typescript"
+            'local_name': "tree-sitter-typescript",
+            'custom_build': False
         },
         "scala": {
             'repo_url': "https://github.com/tree-sitter/tree-sitter-scala.git",
-            'local_name': "tree-sitter-scala"
+            'local_name': "tree-sitter-scala",
+            'custom_build': False
+        },
+        "rust": {
+            'repo_url': "https://github.com/tree-sitter/tree-sitter-rust.git",
+            'local_name': "tree-sitter-rust",
+            'specific_version': "v0.20.3",  # 使用兼容版本
+            'custom_build': False
         }
     }
     
@@ -204,8 +267,6 @@ def get_file_extension(language):
         "go": ".go",
         "ruby": ".rb",
         "rust": ".rs",
-        "php": ".php",
-        "swift": ".swift",
         "scala": ".scala"
     }
     return extension_map.get(language, f".{language}")
@@ -240,6 +301,21 @@ def main():
     if not os.path.exists(repo_path):
         print(f"克隆{repo_info['repo_url']}仓库...")
         os.system(f"git clone {repo_info['repo_url']} {repo_path}")
+        
+        # 如果指定了特定版本，则切换到该版本
+        if repo_info['specific_version']:
+            print(f"切换到版本: {repo_info['specific_version']}...")
+            current_dir = os.getcwd()
+            os.chdir(repo_path)
+            os.system(f"git checkout {repo_info['specific_version']}")
+            os.chdir(current_dir)
+    
+    # 检查是否需要安装Node.js依赖
+    if repo_info.get('custom_build', False):
+        # 确保package.json存在
+        if os.path.exists(os.path.join(repo_path, "package.json")):
+            print(f"安装{language}的Node.js依赖...")
+            os.system(f"cd {repo_path} && npm install")
     
     parser = setup_tree_sitter_parser(language)
     
