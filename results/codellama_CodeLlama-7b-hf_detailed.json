@@ -1,0 +1,4675 @@
+{
+  "grammar_nodes": [
+    {
+      "type": "module",
+      "start_byte": 0,
+      "end_byte": 478,
+      "start_point": [
+        0,
+        0
+      ],
+      "end_point": [
+        16,
+        35
+      ],
+      "text": "import os\n\nclass DataProcessor:\n    def __init__(self, data):\n        self.data = data # Initialize data\n\n    def calculate_average(self):\n        \"\"\"This function calculates the average.\"\"\"\n        if not self.data:\n            return 0\n        total_sum = sum(self.data)\n        return total_sum / len(self.data)\n\ndef main_function(file_path: str):\n    processor = DataProcessor([10, 20, 30, 40, 50])\n    avg = processor.calculate_average()\n    print(f\"The average is: {avg}\")",
+      "depth": 0
+    },
+    {
+      "type": "import_statement",
+      "start_byte": 0,
+      "end_byte": 9,
+      "start_point": [
+        0,
+        0
+      ],
+      "end_point": [
+        0,
+        9
+      ],
+      "text": "import os",
+      "depth": 1
+    },
+    {
+      "type": "import",
+      "start_byte": 0,
+      "end_byte": 6,
+      "start_point": [
+        0,
+        0
+      ],
+      "end_point": [
+        0,
+        6
+      ],
+      "text": "import",
+      "depth": 2
+    },
+    {
+      "type": "dotted_name",
+      "start_byte": 7,
+      "end_byte": 9,
+      "start_point": [
+        0,
+        7
+      ],
+      "end_point": [
+        0,
+        9
+      ],
+      "text": "os",
+      "depth": 2
+    },
+    {
+      "type": "identifier",
+      "start_byte": 7,
+      "end_byte": 9,
+      "start_point": [
+        0,
+        7
+      ],
+      "end_point": [
+        0,
+        9
+      ],
+      "text": "os",
+      "depth": 3
+    },
+    {
+      "type": "class_definition",
+      "start_byte": 11,
+      "end_byte": 314,
+      "start_point": [
+        2,
+        0
+      ],
+      "end_point": [
+        11,
+        41
+      ],
+      "text": "class DataProcessor:\n    def __init__(self, data):\n        self.data = data # Initialize data\n\n    def calculate_average(self):\n        \"\"\"This function calculates the average.\"\"\"\n        if not self.data:\n            return 0\n        total_sum = sum(self.data)\n        return total_sum / len(self.data)",
+      "depth": 1
+    },
+    {
+      "type": "class",
+      "start_byte": 11,
+      "end_byte": 16,
+      "start_point": [
+        2,
+        0
+      ],
+      "end_point": [
+        2,
+        5
+      ],
+      "text": "class",
+      "depth": 2
+    },
+    {
+      "type": "identifier",
+      "start_byte": 17,
+      "end_byte": 30,
+      "start_point": [
+        2,
+        6
+      ],
+      "end_point": [
+        2,
+        19
+      ],
+      "text": "DataProcessor",
+      "depth": 2
+    },
+    {
+      "type": ":",
+      "start_byte": 30,
+      "end_byte": 31,
+      "start_point": [
+        2,
+        19
+      ],
+      "end_point": [
+        2,
+        20
+      ],
+      "text": ":",
+      "depth": 2
+    },
+    {
+      "type": "block",
+      "start_byte": 36,
+      "end_byte": 314,
+      "start_point": [
+        3,
+        4
+      ],
+      "end_point": [
+        11,
+        41
+      ],
+      "text": "def __init__(self, data):\n        self.data = data # Initialize data\n\n    def calculate_average(self):\n        \"\"\"This function calculates the average.\"\"\"\n        if not self.data:\n            return 0\n        total_sum = sum(self.data)\n        return total_sum / len(self.data)",
+      "depth": 2
+    },
+    {
+      "type": "function_definition",
+      "start_byte": 36,
+      "end_byte": 104,
+      "start_point": [
+        3,
+        4
+      ],
+      "end_point": [
+        4,
+        42
+      ],
+      "text": "def __init__(self, data):\n        self.data = data # Initialize data",
+      "depth": 3
+    },
+    {
+      "type": "def",
+      "start_byte": 36,
+      "end_byte": 39,
+      "start_point": [
+        3,
+        4
+      ],
+      "end_point": [
+        3,
+        7
+      ],
+      "text": "def",
+      "depth": 4
+    },
+    {
+      "type": "identifier",
+      "start_byte": 40,
+      "end_byte": 48,
+      "start_point": [
+        3,
+        8
+      ],
+      "end_point": [
+        3,
+        16
+      ],
+      "text": "__init__",
+      "depth": 4
+    },
+    {
+      "type": "parameters",
+      "start_byte": 48,
+      "end_byte": 60,
+      "start_point": [
+        3,
+        16
+      ],
+      "end_point": [
+        3,
+        28
+      ],
+      "text": "(self, data)",
+      "depth": 4
+    },
+    {
+      "type": "(",
+      "start_byte": 48,
+      "end_byte": 49,
+      "start_point": [
+        3,
+        16
+      ],
+      "end_point": [
+        3,
+        17
+      ],
+      "text": "(",
+      "depth": 5
+    },
+    {
+      "type": "identifier",
+      "start_byte": 49,
+      "end_byte": 53,
+      "start_point": [
+        3,
+        17
+      ],
+      "end_point": [
+        3,
+        21
+      ],
+      "text": "self",
+      "depth": 5
+    },
+    {
+      "type": ",",
+      "start_byte": 53,
+      "end_byte": 54,
+      "start_point": [
+        3,
+        21
+      ],
+      "end_point": [
+        3,
+        22
+      ],
+      "text": ",",
+      "depth": 5
+    },
+    {
+      "type": "identifier",
+      "start_byte": 55,
+      "end_byte": 59,
+      "start_point": [
+        3,
+        23
+      ],
+      "end_point": [
+        3,
+        27
+      ],
+      "text": "data",
+      "depth": 5
+    },
+    {
+      "type": ")",
+      "start_byte": 59,
+      "end_byte": 60,
+      "start_point": [
+        3,
+        27
+      ],
+      "end_point": [
+        3,
+        28
+      ],
+      "text": ")",
+      "depth": 5
+    },
+    {
+      "type": ":",
+      "start_byte": 60,
+      "end_byte": 61,
+      "start_point": [
+        3,
+        28
+      ],
+      "end_point": [
+        3,
+        29
+      ],
+      "text": ":",
+      "depth": 4
+    },
+    {
+      "type": "block",
+      "start_byte": 70,
+      "end_byte": 104,
+      "start_point": [
+        4,
+        8
+      ],
+      "end_point": [
+        4,
+        42
+      ],
+      "text": "self.data = data # Initialize data",
+      "depth": 4
+    },
+    {
+      "type": "expression_statement",
+      "start_byte": 70,
+      "end_byte": 86,
+      "start_point": [
+        4,
+        8
+      ],
+      "end_point": [
+        4,
+        24
+      ],
+      "text": "self.data = data",
+      "depth": 5
+    },
+    {
+      "type": "assignment",
+      "start_byte": 70,
+      "end_byte": 86,
+      "start_point": [
+        4,
+        8
+      ],
+      "end_point": [
+        4,
+        24
+      ],
+      "text": "self.data = data",
+      "depth": 6
+    },
+    {
+      "type": "attribute",
+      "start_byte": 70,
+      "end_byte": 79,
+      "start_point": [
+        4,
+        8
+      ],
+      "end_point": [
+        4,
+        17
+      ],
+      "text": "self.data",
+      "depth": 7
+    },
+    {
+      "type": "identifier",
+      "start_byte": 70,
+      "end_byte": 74,
+      "start_point": [
+        4,
+        8
+      ],
+      "end_point": [
+        4,
+        12
+      ],
+      "text": "self",
+      "depth": 8
+    },
+    {
+      "type": ".",
+      "start_byte": 74,
+      "end_byte": 75,
+      "start_point": [
+        4,
+        12
+      ],
+      "end_point": [
+        4,
+        13
+      ],
+      "text": ".",
+      "depth": 8
+    },
+    {
+      "type": "identifier",
+      "start_byte": 75,
+      "end_byte": 79,
+      "start_point": [
+        4,
+        13
+      ],
+      "end_point": [
+        4,
+        17
+      ],
+      "text": "data",
+      "depth": 8
+    },
+    {
+      "type": "=",
+      "start_byte": 80,
+      "end_byte": 81,
+      "start_point": [
+        4,
+        18
+      ],
+      "end_point": [
+        4,
+        19
+      ],
+      "text": "=",
+      "depth": 7
+    },
+    {
+      "type": "identifier",
+      "start_byte": 82,
+      "end_byte": 86,
+      "start_point": [
+        4,
+        20
+      ],
+      "end_point": [
+        4,
+        24
+      ],
+      "text": "data",
+      "depth": 7
+    },
+    {
+      "type": "comment",
+      "start_byte": 87,
+      "end_byte": 104,
+      "start_point": [
+        4,
+        25
+      ],
+      "end_point": [
+        4,
+        42
+      ],
+      "text": "# Initialize data",
+      "depth": 5
+    },
+    {
+      "type": "function_definition",
+      "start_byte": 110,
+      "end_byte": 314,
+      "start_point": [
+        6,
+        4
+      ],
+      "end_point": [
+        11,
+        41
+      ],
+      "text": "def calculate_average(self):\n        \"\"\"This function calculates the average.\"\"\"\n        if not self.data:\n            return 0\n        total_sum = sum(self.data)\n        return total_sum / len(self.data)",
+      "depth": 3
+    },
+    {
+      "type": "def",
+      "start_byte": 110,
+      "end_byte": 113,
+      "start_point": [
+        6,
+        4
+      ],
+      "end_point": [
+        6,
+        7
+      ],
+      "text": "def",
+      "depth": 4
+    },
+    {
+      "type": "identifier",
+      "start_byte": 114,
+      "end_byte": 131,
+      "start_point": [
+        6,
+        8
+      ],
+      "end_point": [
+        6,
+        25
+      ],
+      "text": "calculate_average",
+      "depth": 4
+    },
+    {
+      "type": "parameters",
+      "start_byte": 131,
+      "end_byte": 137,
+      "start_point": [
+        6,
+        25
+      ],
+      "end_point": [
+        6,
+        31
+      ],
+      "text": "(self)",
+      "depth": 4
+    },
+    {
+      "type": "(",
+      "start_byte": 131,
+      "end_byte": 132,
+      "start_point": [
+        6,
+        25
+      ],
+      "end_point": [
+        6,
+        26
+      ],
+      "text": "(",
+      "depth": 5
+    },
+    {
+      "type": "identifier",
+      "start_byte": 132,
+      "end_byte": 136,
+      "start_point": [
+        6,
+        26
+      ],
+      "end_point": [
+        6,
+        30
+      ],
+      "text": "self",
+      "depth": 5
+    },
+    {
+      "type": ")",
+      "start_byte": 136,
+      "end_byte": 137,
+      "start_point": [
+        6,
+        30
+      ],
+      "end_point": [
+        6,
+        31
+      ],
+      "text": ")",
+      "depth": 5
+    },
+    {
+      "type": ":",
+      "start_byte": 137,
+      "end_byte": 138,
+      "start_point": [
+        6,
+        31
+      ],
+      "end_point": [
+        6,
+        32
+      ],
+      "text": ":",
+      "depth": 4
+    },
+    {
+      "type": "block",
+      "start_byte": 147,
+      "end_byte": 314,
+      "start_point": [
+        7,
+        8
+      ],
+      "end_point": [
+        11,
+        41
+      ],
+      "text": "\"\"\"This function calculates the average.\"\"\"\n        if not self.data:\n            return 0\n        total_sum = sum(self.data)\n        return total_sum / len(self.data)",
+      "depth": 4
+    },
+    {
+      "type": "expression_statement",
+      "start_byte": 147,
+      "end_byte": 190,
+      "start_point": [
+        7,
+        8
+      ],
+      "end_point": [
+        7,
+        51
+      ],
+      "text": "\"\"\"This function calculates the average.\"\"\"",
+      "depth": 5
+    },
+    {
+      "type": "string",
+      "start_byte": 147,
+      "end_byte": 190,
+      "start_point": [
+        7,
+        8
+      ],
+      "end_point": [
+        7,
+        51
+      ],
+      "text": "\"\"\"This function calculates the average.\"\"\"",
+      "depth": 6
+    },
+    {
+      "type": "string_start",
+      "start_byte": 147,
+      "end_byte": 150,
+      "start_point": [
+        7,
+        8
+      ],
+      "end_point": [
+        7,
+        11
+      ],
+      "text": "\"\"\"",
+      "depth": 7
+    },
+    {
+      "type": "string_content",
+      "start_byte": 150,
+      "end_byte": 187,
+      "start_point": [
+        7,
+        11
+      ],
+      "end_point": [
+        7,
+        48
+      ],
+      "text": "This function calculates the average.",
+      "depth": 7
+    },
+    {
+      "type": "string_end",
+      "start_byte": 187,
+      "end_byte": 190,
+      "start_point": [
+        7,
+        48
+      ],
+      "end_point": [
+        7,
+        51
+      ],
+      "text": "\"\"\"",
+      "depth": 7
+    },
+    {
+      "type": "if_statement",
+      "start_byte": 199,
+      "end_byte": 237,
+      "start_point": [
+        8,
+        8
+      ],
+      "end_point": [
+        9,
+        20
+      ],
+      "text": "if not self.data:\n            return 0",
+      "depth": 5
+    },
+    {
+      "type": "if",
+      "start_byte": 199,
+      "end_byte": 201,
+      "start_point": [
+        8,
+        8
+      ],
+      "end_point": [
+        8,
+        10
+      ],
+      "text": "if",
+      "depth": 6
+    },
+    {
+      "type": "not_operator",
+      "start_byte": 202,
+      "end_byte": 215,
+      "start_point": [
+        8,
+        11
+      ],
+      "end_point": [
+        8,
+        24
+      ],
+      "text": "not self.data",
+      "depth": 6
+    },
+    {
+      "type": "not",
+      "start_byte": 202,
+      "end_byte": 205,
+      "start_point": [
+        8,
+        11
+      ],
+      "end_point": [
+        8,
+        14
+      ],
+      "text": "not",
+      "depth": 7
+    },
+    {
+      "type": "attribute",
+      "start_byte": 206,
+      "end_byte": 215,
+      "start_point": [
+        8,
+        15
+      ],
+      "end_point": [
+        8,
+        24
+      ],
+      "text": "self.data",
+      "depth": 7
+    },
+    {
+      "type": "identifier",
+      "start_byte": 206,
+      "end_byte": 210,
+      "start_point": [
+        8,
+        15
+      ],
+      "end_point": [
+        8,
+        19
+      ],
+      "text": "self",
+      "depth": 8
+    },
+    {
+      "type": ".",
+      "start_byte": 210,
+      "end_byte": 211,
+      "start_point": [
+        8,
+        19
+      ],
+      "end_point": [
+        8,
+        20
+      ],
+      "text": ".",
+      "depth": 8
+    },
+    {
+      "type": "identifier",
+      "start_byte": 211,
+      "end_byte": 215,
+      "start_point": [
+        8,
+        20
+      ],
+      "end_point": [
+        8,
+        24
+      ],
+      "text": "data",
+      "depth": 8
+    },
+    {
+      "type": ":",
+      "start_byte": 215,
+      "end_byte": 216,
+      "start_point": [
+        8,
+        24
+      ],
+      "end_point": [
+        8,
+        25
+      ],
+      "text": ":",
+      "depth": 6
+    },
+    {
+      "type": "block",
+      "start_byte": 229,
+      "end_byte": 237,
+      "start_point": [
+        9,
+        12
+      ],
+      "end_point": [
+        9,
+        20
+      ],
+      "text": "return 0",
+      "depth": 6
+    },
+    {
+      "type": "return_statement",
+      "start_byte": 229,
+      "end_byte": 237,
+      "start_point": [
+        9,
+        12
+      ],
+      "end_point": [
+        9,
+        20
+      ],
+      "text": "return 0",
+      "depth": 7
+    },
+    {
+      "type": "return",
+      "start_byte": 229,
+      "end_byte": 235,
+      "start_point": [
+        9,
+        12
+      ],
+      "end_point": [
+        9,
+        18
+      ],
+      "text": "return",
+      "depth": 8
+    },
+    {
+      "type": "integer",
+      "start_byte": 236,
+      "end_byte": 237,
+      "start_point": [
+        9,
+        19
+      ],
+      "end_point": [
+        9,
+        20
+      ],
+      "text": "0",
+      "depth": 8
+    },
+    {
+      "type": "expression_statement",
+      "start_byte": 246,
+      "end_byte": 272,
+      "start_point": [
+        10,
+        8
+      ],
+      "end_point": [
+        10,
+        34
+      ],
+      "text": "total_sum = sum(self.data)",
+      "depth": 5
+    },
+    {
+      "type": "assignment",
+      "start_byte": 246,
+      "end_byte": 272,
+      "start_point": [
+        10,
+        8
+      ],
+      "end_point": [
+        10,
+        34
+      ],
+      "text": "total_sum = sum(self.data)",
+      "depth": 6
+    },
+    {
+      "type": "identifier",
+      "start_byte": 246,
+      "end_byte": 255,
+      "start_point": [
+        10,
+        8
+      ],
+      "end_point": [
+        10,
+        17
+      ],
+      "text": "total_sum",
+      "depth": 7
+    },
+    {
+      "type": "=",
+      "start_byte": 256,
+      "end_byte": 257,
+      "start_point": [
+        10,
+        18
+      ],
+      "end_point": [
+        10,
+        19
+      ],
+      "text": "=",
+      "depth": 7
+    },
+    {
+      "type": "call",
+      "start_byte": 258,
+      "end_byte": 272,
+      "start_point": [
+        10,
+        20
+      ],
+      "end_point": [
+        10,
+        34
+      ],
+      "text": "sum(self.data)",
+      "depth": 7
+    },
+    {
+      "type": "identifier",
+      "start_byte": 258,
+      "end_byte": 261,
+      "start_point": [
+        10,
+        20
+      ],
+      "end_point": [
+        10,
+        23
+      ],
+      "text": "sum",
+      "depth": 8
+    },
+    {
+      "type": "argument_list",
+      "start_byte": 261,
+      "end_byte": 272,
+      "start_point": [
+        10,
+        23
+      ],
+      "end_point": [
+        10,
+        34
+      ],
+      "text": "(self.data)",
+      "depth": 8
+    },
+    {
+      "type": "(",
+      "start_byte": 261,
+      "end_byte": 262,
+      "start_point": [
+        10,
+        23
+      ],
+      "end_point": [
+        10,
+        24
+      ],
+      "text": "(",
+      "depth": 9
+    },
+    {
+      "type": "attribute",
+      "start_byte": 262,
+      "end_byte": 271,
+      "start_point": [
+        10,
+        24
+      ],
+      "end_point": [
+        10,
+        33
+      ],
+      "text": "self.data",
+      "depth": 9
+    },
+    {
+      "type": "identifier",
+      "start_byte": 262,
+      "end_byte": 266,
+      "start_point": [
+        10,
+        24
+      ],
+      "end_point": [
+        10,
+        28
+      ],
+      "text": "self",
+      "depth": 10
+    },
+    {
+      "type": ".",
+      "start_byte": 266,
+      "end_byte": 267,
+      "start_point": [
+        10,
+        28
+      ],
+      "end_point": [
+        10,
+        29
+      ],
+      "text": ".",
+      "depth": 10
+    },
+    {
+      "type": "identifier",
+      "start_byte": 267,
+      "end_byte": 271,
+      "start_point": [
+        10,
+        29
+      ],
+      "end_point": [
+        10,
+        33
+      ],
+      "text": "data",
+      "depth": 10
+    },
+    {
+      "type": ")",
+      "start_byte": 271,
+      "end_byte": 272,
+      "start_point": [
+        10,
+        33
+      ],
+      "end_point": [
+        10,
+        34
+      ],
+      "text": ")",
+      "depth": 9
+    },
+    {
+      "type": "return_statement",
+      "start_byte": 281,
+      "end_byte": 314,
+      "start_point": [
+        11,
+        8
+      ],
+      "end_point": [
+        11,
+        41
+      ],
+      "text": "return total_sum / len(self.data)",
+      "depth": 5
+    },
+    {
+      "type": "return",
+      "start_byte": 281,
+      "end_byte": 287,
+      "start_point": [
+        11,
+        8
+      ],
+      "end_point": [
+        11,
+        14
+      ],
+      "text": "return",
+      "depth": 6
+    },
+    {
+      "type": "binary_operator",
+      "start_byte": 288,
+      "end_byte": 314,
+      "start_point": [
+        11,
+        15
+      ],
+      "end_point": [
+        11,
+        41
+      ],
+      "text": "total_sum / len(self.data)",
+      "depth": 6
+    },
+    {
+      "type": "identifier",
+      "start_byte": 288,
+      "end_byte": 297,
+      "start_point": [
+        11,
+        15
+      ],
+      "end_point": [
+        11,
+        24
+      ],
+      "text": "total_sum",
+      "depth": 7
+    },
+    {
+      "type": "/",
+      "start_byte": 298,
+      "end_byte": 299,
+      "start_point": [
+        11,
+        25
+      ],
+      "end_point": [
+        11,
+        26
+      ],
+      "text": "/",
+      "depth": 7
+    },
+    {
+      "type": "call",
+      "start_byte": 300,
+      "end_byte": 314,
+      "start_point": [
+        11,
+        27
+      ],
+      "end_point": [
+        11,
+        41
+      ],
+      "text": "len(self.data)",
+      "depth": 7
+    },
+    {
+      "type": "identifier",
+      "start_byte": 300,
+      "end_byte": 303,
+      "start_point": [
+        11,
+        27
+      ],
+      "end_point": [
+        11,
+        30
+      ],
+      "text": "len",
+      "depth": 8
+    },
+    {
+      "type": "argument_list",
+      "start_byte": 303,
+      "end_byte": 314,
+      "start_point": [
+        11,
+        30
+      ],
+      "end_point": [
+        11,
+        41
+      ],
+      "text": "(self.data)",
+      "depth": 8
+    },
+    {
+      "type": "(",
+      "start_byte": 303,
+      "end_byte": 304,
+      "start_point": [
+        11,
+        30
+      ],
+      "end_point": [
+        11,
+        31
+      ],
+      "text": "(",
+      "depth": 9
+    },
+    {
+      "type": "attribute",
+      "start_byte": 304,
+      "end_byte": 313,
+      "start_point": [
+        11,
+        31
+      ],
+      "end_point": [
+        11,
+        40
+      ],
+      "text": "self.data",
+      "depth": 9
+    },
+    {
+      "type": "identifier",
+      "start_byte": 304,
+      "end_byte": 308,
+      "start_point": [
+        11,
+        31
+      ],
+      "end_point": [
+        11,
+        35
+      ],
+      "text": "self",
+      "depth": 10
+    },
+    {
+      "type": ".",
+      "start_byte": 308,
+      "end_byte": 309,
+      "start_point": [
+        11,
+        35
+      ],
+      "end_point": [
+        11,
+        36
+      ],
+      "text": ".",
+      "depth": 10
+    },
+    {
+      "type": "identifier",
+      "start_byte": 309,
+      "end_byte": 313,
+      "start_point": [
+        11,
+        36
+      ],
+      "end_point": [
+        11,
+        40
+      ],
+      "text": "data",
+      "depth": 10
+    },
+    {
+      "type": ")",
+      "start_byte": 313,
+      "end_byte": 314,
+      "start_point": [
+        11,
+        40
+      ],
+      "end_point": [
+        11,
+        41
+      ],
+      "text": ")",
+      "depth": 9
+    },
+    {
+      "type": "function_definition",
+      "start_byte": 316,
+      "end_byte": 478,
+      "start_point": [
+        13,
+        0
+      ],
+      "end_point": [
+        16,
+        35
+      ],
+      "text": "def main_function(file_path: str):\n    processor = DataProcessor([10, 20, 30, 40, 50])\n    avg = processor.calculate_average()\n    print(f\"The average is: {avg}\")",
+      "depth": 1
+    },
+    {
+      "type": "def",
+      "start_byte": 316,
+      "end_byte": 319,
+      "start_point": [
+        13,
+        0
+      ],
+      "end_point": [
+        13,
+        3
+      ],
+      "text": "def",
+      "depth": 2
+    },
+    {
+      "type": "identifier",
+      "start_byte": 320,
+      "end_byte": 333,
+      "start_point": [
+        13,
+        4
+      ],
+      "end_point": [
+        13,
+        17
+      ],
+      "text": "main_function",
+      "depth": 2
+    },
+    {
+      "type": "parameters",
+      "start_byte": 333,
+      "end_byte": 349,
+      "start_point": [
+        13,
+        17
+      ],
+      "end_point": [
+        13,
+        33
+      ],
+      "text": "(file_path: str)",
+      "depth": 2
+    },
+    {
+      "type": "(",
+      "start_byte": 333,
+      "end_byte": 334,
+      "start_point": [
+        13,
+        17
+      ],
+      "end_point": [
+        13,
+        18
+      ],
+      "text": "(",
+      "depth": 3
+    },
+    {
+      "type": "typed_parameter",
+      "start_byte": 334,
+      "end_byte": 348,
+      "start_point": [
+        13,
+        18
+      ],
+      "end_point": [
+        13,
+        32
+      ],
+      "text": "file_path: str",
+      "depth": 3
+    },
+    {
+      "type": "identifier",
+      "start_byte": 334,
+      "end_byte": 343,
+      "start_point": [
+        13,
+        18
+      ],
+      "end_point": [
+        13,
+        27
+      ],
+      "text": "file_path",
+      "depth": 4
+    },
+    {
+      "type": ":",
+      "start_byte": 343,
+      "end_byte": 344,
+      "start_point": [
+        13,
+        27
+      ],
+      "end_point": [
+        13,
+        28
+      ],
+      "text": ":",
+      "depth": 4
+    },
+    {
+      "type": "type",
+      "start_byte": 345,
+      "end_byte": 348,
+      "start_point": [
+        13,
+        29
+      ],
+      "end_point": [
+        13,
+        32
+      ],
+      "text": "str",
+      "depth": 4
+    },
+    {
+      "type": "identifier",
+      "start_byte": 345,
+      "end_byte": 348,
+      "start_point": [
+        13,
+        29
+      ],
+      "end_point": [
+        13,
+        32
+      ],
+      "text": "str",
+      "depth": 5
+    },
+    {
+      "type": ")",
+      "start_byte": 348,
+      "end_byte": 349,
+      "start_point": [
+        13,
+        32
+      ],
+      "end_point": [
+        13,
+        33
+      ],
+      "text": ")",
+      "depth": 3
+    },
+    {
+      "type": ":",
+      "start_byte": 349,
+      "end_byte": 350,
+      "start_point": [
+        13,
+        33
+      ],
+      "end_point": [
+        13,
+        34
+      ],
+      "text": ":",
+      "depth": 2
+    },
+    {
+      "type": "block",
+      "start_byte": 355,
+      "end_byte": 478,
+      "start_point": [
+        14,
+        4
+      ],
+      "end_point": [
+        16,
+        35
+      ],
+      "text": "processor = DataProcessor([10, 20, 30, 40, 50])\n    avg = processor.calculate_average()\n    print(f\"The average is: {avg}\")",
+      "depth": 2
+    },
+    {
+      "type": "expression_statement",
+      "start_byte": 355,
+      "end_byte": 402,
+      "start_point": [
+        14,
+        4
+      ],
+      "end_point": [
+        14,
+        51
+      ],
+      "text": "processor = DataProcessor([10, 20, 30, 40, 50])",
+      "depth": 3
+    },
+    {
+      "type": "assignment",
+      "start_byte": 355,
+      "end_byte": 402,
+      "start_point": [
+        14,
+        4
+      ],
+      "end_point": [
+        14,
+        51
+      ],
+      "text": "processor = DataProcessor([10, 20, 30, 40, 50])",
+      "depth": 4
+    },
+    {
+      "type": "identifier",
+      "start_byte": 355,
+      "end_byte": 364,
+      "start_point": [
+        14,
+        4
+      ],
+      "end_point": [
+        14,
+        13
+      ],
+      "text": "processor",
+      "depth": 5
+    },
+    {
+      "type": "=",
+      "start_byte": 365,
+      "end_byte": 366,
+      "start_point": [
+        14,
+        14
+      ],
+      "end_point": [
+        14,
+        15
+      ],
+      "text": "=",
+      "depth": 5
+    },
+    {
+      "type": "call",
+      "start_byte": 367,
+      "end_byte": 402,
+      "start_point": [
+        14,
+        16
+      ],
+      "end_point": [
+        14,
+        51
+      ],
+      "text": "DataProcessor([10, 20, 30, 40, 50])",
+      "depth": 5
+    },
+    {
+      "type": "identifier",
+      "start_byte": 367,
+      "end_byte": 380,
+      "start_point": [
+        14,
+        16
+      ],
+      "end_point": [
+        14,
+        29
+      ],
+      "text": "DataProcessor",
+      "depth": 6
+    },
+    {
+      "type": "argument_list",
+      "start_byte": 380,
+      "end_byte": 402,
+      "start_point": [
+        14,
+        29
+      ],
+      "end_point": [
+        14,
+        51
+      ],
+      "text": "([10, 20, 30, 40, 50])",
+      "depth": 6
+    },
+    {
+      "type": "(",
+      "start_byte": 380,
+      "end_byte": 381,
+      "start_point": [
+        14,
+        29
+      ],
+      "end_point": [
+        14,
+        30
+      ],
+      "text": "(",
+      "depth": 7
+    },
+    {
+      "type": "list",
+      "start_byte": 381,
+      "end_byte": 401,
+      "start_point": [
+        14,
+        30
+      ],
+      "end_point": [
+        14,
+        50
+      ],
+      "text": "[10, 20, 30, 40, 50]",
+      "depth": 7
+    },
+    {
+      "type": "[",
+      "start_byte": 381,
+      "end_byte": 382,
+      "start_point": [
+        14,
+        30
+      ],
+      "end_point": [
+        14,
+        31
+      ],
+      "text": "[",
+      "depth": 8
+    },
+    {
+      "type": "integer",
+      "start_byte": 382,
+      "end_byte": 384,
+      "start_point": [
+        14,
+        31
+      ],
+      "end_point": [
+        14,
+        33
+      ],
+      "text": "10",
+      "depth": 8
+    },
+    {
+      "type": ",",
+      "start_byte": 384,
+      "end_byte": 385,
+      "start_point": [
+        14,
+        33
+      ],
+      "end_point": [
+        14,
+        34
+      ],
+      "text": ",",
+      "depth": 8
+    },
+    {
+      "type": "integer",
+      "start_byte": 386,
+      "end_byte": 388,
+      "start_point": [
+        14,
+        35
+      ],
+      "end_point": [
+        14,
+        37
+      ],
+      "text": "20",
+      "depth": 8
+    },
+    {
+      "type": ",",
+      "start_byte": 388,
+      "end_byte": 389,
+      "start_point": [
+        14,
+        37
+      ],
+      "end_point": [
+        14,
+        38
+      ],
+      "text": ",",
+      "depth": 8
+    },
+    {
+      "type": "integer",
+      "start_byte": 390,
+      "end_byte": 392,
+      "start_point": [
+        14,
+        39
+      ],
+      "end_point": [
+        14,
+        41
+      ],
+      "text": "30",
+      "depth": 8
+    },
+    {
+      "type": ",",
+      "start_byte": 392,
+      "end_byte": 393,
+      "start_point": [
+        14,
+        41
+      ],
+      "end_point": [
+        14,
+        42
+      ],
+      "text": ",",
+      "depth": 8
+    },
+    {
+      "type": "integer",
+      "start_byte": 394,
+      "end_byte": 396,
+      "start_point": [
+        14,
+        43
+      ],
+      "end_point": [
+        14,
+        45
+      ],
+      "text": "40",
+      "depth": 8
+    },
+    {
+      "type": ",",
+      "start_byte": 396,
+      "end_byte": 397,
+      "start_point": [
+        14,
+        45
+      ],
+      "end_point": [
+        14,
+        46
+      ],
+      "text": ",",
+      "depth": 8
+    },
+    {
+      "type": "integer",
+      "start_byte": 398,
+      "end_byte": 400,
+      "start_point": [
+        14,
+        47
+      ],
+      "end_point": [
+        14,
+        49
+      ],
+      "text": "50",
+      "depth": 8
+    },
+    {
+      "type": "]",
+      "start_byte": 400,
+      "end_byte": 401,
+      "start_point": [
+        14,
+        49
+      ],
+      "end_point": [
+        14,
+        50
+      ],
+      "text": "]",
+      "depth": 8
+    },
+    {
+      "type": ")",
+      "start_byte": 401,
+      "end_byte": 402,
+      "start_point": [
+        14,
+        50
+      ],
+      "end_point": [
+        14,
+        51
+      ],
+      "text": ")",
+      "depth": 7
+    },
+    {
+      "type": "expression_statement",
+      "start_byte": 407,
+      "end_byte": 442,
+      "start_point": [
+        15,
+        4
+      ],
+      "end_point": [
+        15,
+        39
+      ],
+      "text": "avg = processor.calculate_average()",
+      "depth": 3
+    },
+    {
+      "type": "assignment",
+      "start_byte": 407,
+      "end_byte": 442,
+      "start_point": [
+        15,
+        4
+      ],
+      "end_point": [
+        15,
+        39
+      ],
+      "text": "avg = processor.calculate_average()",
+      "depth": 4
+    },
+    {
+      "type": "identifier",
+      "start_byte": 407,
+      "end_byte": 410,
+      "start_point": [
+        15,
+        4
+      ],
+      "end_point": [
+        15,
+        7
+      ],
+      "text": "avg",
+      "depth": 5
+    },
+    {
+      "type": "=",
+      "start_byte": 411,
+      "end_byte": 412,
+      "start_point": [
+        15,
+        8
+      ],
+      "end_point": [
+        15,
+        9
+      ],
+      "text": "=",
+      "depth": 5
+    },
+    {
+      "type": "call",
+      "start_byte": 413,
+      "end_byte": 442,
+      "start_point": [
+        15,
+        10
+      ],
+      "end_point": [
+        15,
+        39
+      ],
+      "text": "processor.calculate_average()",
+      "depth": 5
+    },
+    {
+      "type": "attribute",
+      "start_byte": 413,
+      "end_byte": 440,
+      "start_point": [
+        15,
+        10
+      ],
+      "end_point": [
+        15,
+        37
+      ],
+      "text": "processor.calculate_average",
+      "depth": 6
+    },
+    {
+      "type": "identifier",
+      "start_byte": 413,
+      "end_byte": 422,
+      "start_point": [
+        15,
+        10
+      ],
+      "end_point": [
+        15,
+        19
+      ],
+      "text": "processor",
+      "depth": 7
+    },
+    {
+      "type": ".",
+      "start_byte": 422,
+      "end_byte": 423,
+      "start_point": [
+        15,
+        19
+      ],
+      "end_point": [
+        15,
+        20
+      ],
+      "text": ".",
+      "depth": 7
+    },
+    {
+      "type": "identifier",
+      "start_byte": 423,
+      "end_byte": 440,
+      "start_point": [
+        15,
+        20
+      ],
+      "end_point": [
+        15,
+        37
+      ],
+      "text": "calculate_average",
+      "depth": 7
+    },
+    {
+      "type": "argument_list",
+      "start_byte": 440,
+      "end_byte": 442,
+      "start_point": [
+        15,
+        37
+      ],
+      "end_point": [
+        15,
+        39
+      ],
+      "text": "()",
+      "depth": 6
+    },
+    {
+      "type": "(",
+      "start_byte": 440,
+      "end_byte": 441,
+      "start_point": [
+        15,
+        37
+      ],
+      "end_point": [
+        15,
+        38
+      ],
+      "text": "(",
+      "depth": 7
+    },
+    {
+      "type": ")",
+      "start_byte": 441,
+      "end_byte": 442,
+      "start_point": [
+        15,
+        38
+      ],
+      "end_point": [
+        15,
+        39
+      ],
+      "text": ")",
+      "depth": 7
+    },
+    {
+      "type": "expression_statement",
+      "start_byte": 447,
+      "end_byte": 478,
+      "start_point": [
+        16,
+        4
+      ],
+      "end_point": [
+        16,
+        35
+      ],
+      "text": "print(f\"The average is: {avg}\")",
+      "depth": 3
+    },
+    {
+      "type": "call",
+      "start_byte": 447,
+      "end_byte": 478,
+      "start_point": [
+        16,
+        4
+      ],
+      "end_point": [
+        16,
+        35
+      ],
+      "text": "print(f\"The average is: {avg}\")",
+      "depth": 4
+    },
+    {
+      "type": "identifier",
+      "start_byte": 447,
+      "end_byte": 452,
+      "start_point": [
+        16,
+        4
+      ],
+      "end_point": [
+        16,
+        9
+      ],
+      "text": "print",
+      "depth": 5
+    },
+    {
+      "type": "argument_list",
+      "start_byte": 452,
+      "end_byte": 478,
+      "start_point": [
+        16,
+        9
+      ],
+      "end_point": [
+        16,
+        35
+      ],
+      "text": "(f\"The average is: {avg}\")",
+      "depth": 5
+    },
+    {
+      "type": "(",
+      "start_byte": 452,
+      "end_byte": 453,
+      "start_point": [
+        16,
+        9
+      ],
+      "end_point": [
+        16,
+        10
+      ],
+      "text": "(",
+      "depth": 6
+    },
+    {
+      "type": "string",
+      "start_byte": 453,
+      "end_byte": 477,
+      "start_point": [
+        16,
+        10
+      ],
+      "end_point": [
+        16,
+        34
+      ],
+      "text": "f\"The average is: {avg}\"",
+      "depth": 6
+    },
+    {
+      "type": "string_start",
+      "start_byte": 453,
+      "end_byte": 455,
+      "start_point": [
+        16,
+        10
+      ],
+      "end_point": [
+        16,
+        12
+      ],
+      "text": "f\"",
+      "depth": 7
+    },
+    {
+      "type": "string_content",
+      "start_byte": 455,
+      "end_byte": 471,
+      "start_point": [
+        16,
+        12
+      ],
+      "end_point": [
+        16,
+        28
+      ],
+      "text": "The average is: ",
+      "depth": 7
+    },
+    {
+      "type": "interpolation",
+      "start_byte": 471,
+      "end_byte": 476,
+      "start_point": [
+        16,
+        28
+      ],
+      "end_point": [
+        16,
+        33
+      ],
+      "text": "{avg}",
+      "depth": 7
+    },
+    {
+      "type": "{",
+      "start_byte": 471,
+      "end_byte": 472,
+      "start_point": [
+        16,
+        28
+      ],
+      "end_point": [
+        16,
+        29
+      ],
+      "text": "{",
+      "depth": 8
+    },
+    {
+      "type": "identifier",
+      "start_byte": 472,
+      "end_byte": 475,
+      "start_point": [
+        16,
+        29
+      ],
+      "end_point": [
+        16,
+        32
+      ],
+      "text": "avg",
+      "depth": 8
+    },
+    {
+      "type": "}",
+      "start_byte": 475,
+      "end_byte": 476,
+      "start_point": [
+        16,
+        32
+      ],
+      "end_point": [
+        16,
+        33
+      ],
+      "text": "}",
+      "depth": 8
+    },
+    {
+      "type": "string_end",
+      "start_byte": 476,
+      "end_byte": 477,
+      "start_point": [
+        16,
+        33
+      ],
+      "end_point": [
+        16,
+        34
+      ],
+      "text": "\"",
+      "depth": 7
+    },
+    {
+      "type": ")",
+      "start_byte": 477,
+      "end_byte": 478,
+      "start_point": [
+        16,
+        34
+      ],
+      "end_point": [
+        16,
+        35
+      ],
+      "text": ")",
+      "depth": 6
+    }
+  ],
+  "tokens": [
+    {
+      "token": "\u2581import",
+      "start_byte": 0,
+      "end_byte": 6,
+      "text": "import"
+    },
+    {
+      "token": "\u2581os",
+      "start_byte": 6,
+      "end_byte": 9,
+      "text": " os"
+    },
+    {
+      "token": "<0x0A>",
+      "start_byte": 9,
+      "end_byte": 10,
+      "text": "\n"
+    },
+    {
+      "token": "<0x0A>",
+      "start_byte": 10,
+      "end_byte": 11,
+      "text": "\n"
+    },
+    {
+      "token": "class",
+      "start_byte": 11,
+      "end_byte": 16,
+      "text": "class"
+    },
+    {
+      "token": "\u2581Data",
+      "start_byte": 16,
+      "end_byte": 21,
+      "text": " Data"
+    },
+    {
+      "token": "Processor",
+      "start_byte": 21,
+      "end_byte": 30,
+      "text": "Processor"
+    },
+    {
+      "token": ":",
+      "start_byte": 30,
+      "end_byte": 31,
+      "text": ":"
+    },
+    {
+      "token": "<0x0A>",
+      "start_byte": 31,
+      "end_byte": 32,
+      "text": "\n"
+    },
+    {
+      "token": "\u2581\u2581\u2581",
+      "start_byte": 32,
+      "end_byte": 35,
+      "text": "   "
+    },
+    {
+      "token": "\u2581def",
+      "start_byte": 35,
+      "end_byte": 39,
+      "text": " def"
+    },
+    {
+      "token": "\u2581__",
+      "start_byte": 39,
+      "end_byte": 42,
+      "text": " __"
+    },
+    {
+      "token": "init",
+      "start_byte": 42,
+      "end_byte": 46,
+      "text": "init"
+    },
+    {
+      "token": "__(",
+      "start_byte": 46,
+      "end_byte": 49,
+      "text": "__("
+    },
+    {
+      "token": "self",
+      "start_byte": 49,
+      "end_byte": 53,
+      "text": "self"
+    },
+    {
+      "token": ",",
+      "start_byte": 53,
+      "end_byte": 54,
+      "text": ","
+    },
+    {
+      "token": "\u2581data",
+      "start_byte": 54,
+      "end_byte": 59,
+      "text": " data"
+    },
+    {
+      "token": "):",
+      "start_byte": 59,
+      "end_byte": 61,
+      "text": "):"
+    },
+    {
+      "token": "<0x0A>",
+      "start_byte": 61,
+      "end_byte": 62,
+      "text": "\n"
+    },
+    {
+      "token": "\u2581\u2581\u2581\u2581\u2581\u2581\u2581",
+      "start_byte": 62,
+      "end_byte": 69,
+      "text": "       "
+    },
+    {
+      "token": "\u2581self",
+      "start_byte": 69,
+      "end_byte": 74,
+      "text": " self"
+    },
+    {
+      "token": ".",
+      "start_byte": 74,
+      "end_byte": 75,
+      "text": "."
+    },
+    {
+      "token": "data",
+      "start_byte": 75,
+      "end_byte": 79,
+      "text": "data"
+    },
+    {
+      "token": "\u2581=",
+      "start_byte": 79,
+      "end_byte": 81,
+      "text": " ="
+    },
+    {
+      "token": "\u2581data",
+      "start_byte": 81,
+      "end_byte": 86,
+      "text": " data"
+    },
+    {
+      "token": "\u2581#",
+      "start_byte": 86,
+      "end_byte": 88,
+      "text": " #"
+    },
+    {
+      "token": "\u2581Initialize",
+      "start_byte": 88,
+      "end_byte": 99,
+      "text": " Initialize"
+    },
+    {
+      "token": "\u2581data",
+      "start_byte": 99,
+      "end_byte": 104,
+      "text": " data"
+    },
+    {
+      "token": "<0x0A>",
+      "start_byte": 104,
+      "end_byte": 105,
+      "text": "\n"
+    },
+    {
+      "token": "<0x0A>",
+      "start_byte": 105,
+      "end_byte": 106,
+      "text": "\n"
+    },
+    {
+      "token": "\u2581\u2581\u2581",
+      "start_byte": 106,
+      "end_byte": 109,
+      "text": "   "
+    },
+    {
+      "token": "\u2581def",
+      "start_byte": 109,
+      "end_byte": 113,
+      "text": " def"
+    },
+    {
+      "token": "\u2581calculate",
+      "start_byte": 113,
+      "end_byte": 123,
+      "text": " calculate"
+    },
+    {
+      "token": "_",
+      "start_byte": 123,
+      "end_byte": 124,
+      "text": "_"
+    },
+    {
+      "token": "aver",
+      "start_byte": 124,
+      "end_byte": 128,
+      "text": "aver"
+    },
+    {
+      "token": "age",
+      "start_byte": 128,
+      "end_byte": 131,
+      "text": "age"
+    },
+    {
+      "token": "(",
+      "start_byte": 131,
+      "end_byte": 132,
+      "text": "("
+    },
+    {
+      "token": "self",
+      "start_byte": 132,
+      "end_byte": 136,
+      "text": "self"
+    },
+    {
+      "token": "):",
+      "start_byte": 136,
+      "end_byte": 138,
+      "text": "):"
+    },
+    {
+      "token": "<0x0A>",
+      "start_byte": 138,
+      "end_byte": 139,
+      "text": "\n"
+    },
+    {
+      "token": "\u2581\u2581\u2581\u2581\u2581\u2581\u2581",
+      "start_byte": 139,
+      "end_byte": 146,
+      "text": "       "
+    },
+    {
+      "token": "\u2581\"\"\"",
+      "start_byte": 146,
+      "end_byte": 150,
+      "text": " \"\"\""
+    },
+    {
+      "token": "This",
+      "start_byte": 150,
+      "end_byte": 154,
+      "text": "This"
+    },
+    {
+      "token": "\u2581function",
+      "start_byte": 154,
+      "end_byte": 163,
+      "text": " function"
+    },
+    {
+      "token": "\u2581calcul",
+      "start_byte": 163,
+      "end_byte": 170,
+      "text": " calcul"
+    },
+    {
+      "token": "ates",
+      "start_byte": 170,
+      "end_byte": 174,
+      "text": "ates"
+    },
+    {
+      "token": "\u2581the",
+      "start_byte": 174,
+      "end_byte": 178,
+      "text": " the"
+    },
+    {
+      "token": "\u2581average",
+      "start_byte": 178,
+      "end_byte": 186,
+      "text": " average"
+    },
+    {
+      "token": ".\"",
+      "start_byte": 186,
+      "end_byte": 188,
+      "text": ".\""
+    },
+    {
+      "token": "\"\"",
+      "start_byte": 188,
+      "end_byte": 190,
+      "text": "\"\""
+    },
+    {
+      "token": "<0x0A>",
+      "start_byte": 190,
+      "end_byte": 191,
+      "text": "\n"
+    },
+    {
+      "token": "\u2581\u2581\u2581\u2581\u2581\u2581\u2581",
+      "start_byte": 191,
+      "end_byte": 198,
+      "text": "       "
+    },
+    {
+      "token": "\u2581if",
+      "start_byte": 198,
+      "end_byte": 201,
+      "text": " if"
+    },
+    {
+      "token": "\u2581not",
+      "start_byte": 201,
+      "end_byte": 205,
+      "text": " not"
+    },
+    {
+      "token": "\u2581self",
+      "start_byte": 205,
+      "end_byte": 210,
+      "text": " self"
+    },
+    {
+      "token": ".",
+      "start_byte": 210,
+      "end_byte": 211,
+      "text": "."
+    },
+    {
+      "token": "data",
+      "start_byte": 211,
+      "end_byte": 215,
+      "text": "data"
+    },
+    {
+      "token": ":",
+      "start_byte": 215,
+      "end_byte": 216,
+      "text": ":"
+    },
+    {
+      "token": "<0x0A>",
+      "start_byte": 216,
+      "end_byte": 217,
+      "text": "\n"
+    },
+    {
+      "token": "\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581\u2581",
+      "start_byte": 217,
+      "end_byte": 228,
+      "text": "           "
+    },
+    {
+      "token": "\u2581return",
+      "start_byte": 228,
+      "end_byte": 235,
+      "text": " return"
+    },
+    {
+      "token": "\u2581",
+      "start_byte": 235,
+      "end_byte": 236,
+      "text": " "
+    },
+    {
+      "token": "0",
+      "start_byte": 236,
+      "end_byte": 237,
+      "text": "0"
+    },
+    {
+      "token": "<0x0A>",
+      "start_byte": 237,
+      "end_byte": 238,
+      "text": "\n"
+    },
+    {
+      "token": "\u2581\u2581\u2581\u2581\u2581\u2581\u2581",
+      "start_byte": 238,
+      "end_byte": 245,
+      "text": "       "
+    },
+    {
+      "token": "\u2581total",
+      "start_byte": 245,
+      "end_byte": 251,
+      "text": " total"
+    },
+    {
+      "token": "_",
+      "start_byte": 251,
+      "end_byte": 252,
+      "text": "_"
+    },
+    {
+      "token": "sum",
+      "start_byte": 252,
+      "end_byte": 255,
+      "text": "sum"
+    },
+    {
+      "token": "\u2581=",
+      "start_byte": 255,
+      "end_byte": 257,
+      "text": " ="
+    },
+    {
+      "token": "\u2581sum",
+      "start_byte": 257,
+      "end_byte": 261,
+      "text": " sum"
+    },
+    {
+      "token": "(",
+      "start_byte": 261,
+      "end_byte": 262,
+      "text": "("
+    },
+    {
+      "token": "self",
+      "start_byte": 262,
+      "end_byte": 266,
+      "text": "self"
+    },
+    {
+      "token": ".",
+      "start_byte": 266,
+      "end_byte": 267,
+      "text": "."
+    },
+    {
+      "token": "data",
+      "start_byte": 267,
+      "end_byte": 271,
+      "text": "data"
+    },
+    {
+      "token": ")",
+      "start_byte": 271,
+      "end_byte": 272,
+      "text": ")"
+    },
+    {
+      "token": "<0x0A>",
+      "start_byte": 272,
+      "end_byte": 273,
+      "text": "\n"
+    },
+    {
+      "token": "\u2581\u2581\u2581\u2581\u2581\u2581\u2581",
+      "start_byte": 273,
+      "end_byte": 280,
+      "text": "       "
+    },
+    {
+      "token": "\u2581return",
+      "start_byte": 280,
+      "end_byte": 287,
+      "text": " return"
+    },
+    {
+      "token": "\u2581total",
+      "start_byte": 287,
+      "end_byte": 293,
+      "text": " total"
+    },
+    {
+      "token": "_",
+      "start_byte": 293,
+      "end_byte": 294,
+      "text": "_"
+    },
+    {
+      "token": "sum",
+      "start_byte": 294,
+      "end_byte": 297,
+      "text": "sum"
+    },
+    {
+      "token": "\u2581/",
+      "start_byte": 297,
+      "end_byte": 299,
+      "text": " /"
+    },
+    {
+      "token": "\u2581len",
+      "start_byte": 299,
+      "end_byte": 303,
+      "text": " len"
+    },
+    {
+      "token": "(",
+      "start_byte": 303,
+      "end_byte": 304,
+      "text": "("
+    },
+    {
+      "token": "self",
+      "start_byte": 304,
+      "end_byte": 308,
+      "text": "self"
+    },
+    {
+      "token": ".",
+      "start_byte": 308,
+      "end_byte": 309,
+      "text": "."
+    },
+    {
+      "token": "data",
+      "start_byte": 309,
+      "end_byte": 313,
+      "text": "data"
+    },
+    {
+      "token": ")",
+      "start_byte": 313,
+      "end_byte": 314,
+      "text": ")"
+    },
+    {
+      "token": "<0x0A>",
+      "start_byte": 314,
+      "end_byte": 315,
+      "text": "\n"
+    },
+    {
+      "token": "<0x0A>",
+      "start_byte": 315,
+      "end_byte": 316,
+      "text": "\n"
+    },
+    {
+      "token": "def",
+      "start_byte": 316,
+      "end_byte": 319,
+      "text": "def"
+    },
+    {
+      "token": "\u2581main",
+      "start_byte": 319,
+      "end_byte": 324,
+      "text": " main"
+    },
+    {
+      "token": "_",
+      "start_byte": 324,
+      "end_byte": 325,
+      "text": "_"
+    },
+    {
+      "token": "function",
+      "start_byte": 325,
+      "end_byte": 333,
+      "text": "function"
+    },
+    {
+      "token": "(",
+      "start_byte": 333,
+      "end_byte": 334,
+      "text": "("
+    },
+    {
+      "token": "file",
+      "start_byte": 334,
+      "end_byte": 338,
+      "text": "file"
+    },
+    {
+      "token": "_",
+      "start_byte": 338,
+      "end_byte": 339,
+      "text": "_"
+    },
+    {
+      "token": "path",
+      "start_byte": 339,
+      "end_byte": 343,
+      "text": "path"
+    },
+    {
+      "token": ":",
+      "start_byte": 343,
+      "end_byte": 344,
+      "text": ":"
+    },
+    {
+      "token": "\u2581str",
+      "start_byte": 344,
+      "end_byte": 348,
+      "text": " str"
+    },
+    {
+      "token": "):",
+      "start_byte": 348,
+      "end_byte": 350,
+      "text": "):"
+    },
+    {
+      "token": "<0x0A>",
+      "start_byte": 350,
+      "end_byte": 351,
+      "text": "\n"
+    },
+    {
+      "token": "\u2581\u2581\u2581",
+      "start_byte": 351,
+      "end_byte": 354,
+      "text": "   "
+    },
+    {
+      "token": "\u2581processor",
+      "start_byte": 354,
+      "end_byte": 364,
+      "text": " processor"
+    },
+    {
+      "token": "\u2581=",
+      "start_byte": 364,
+      "end_byte": 366,
+      "text": " ="
+    },
+    {
+      "token": "\u2581Data",
+      "start_byte": 366,
+      "end_byte": 371,
+      "text": " Data"
+    },
+    {
+      "token": "Processor",
+      "start_byte": 371,
+      "end_byte": 380,
+      "text": "Processor"
+    },
+    {
+      "token": "([",
+      "start_byte": 380,
+      "end_byte": 382,
+      "text": "(["
+    },
+    {
+      "token": "1",
+      "start_byte": 382,
+      "end_byte": 383,
+      "text": "1"
+    },
+    {
+      "token": "0",
+      "start_byte": 383,
+      "end_byte": 384,
+      "text": "0"
+    },
+    {
+      "token": ",",
+      "start_byte": 384,
+      "end_byte": 385,
+      "text": ","
+    },
+    {
+      "token": "\u2581",
+      "start_byte": 385,
+      "end_byte": 386,
+      "text": " "
+    },
+    {
+      "token": "2",
+      "start_byte": 386,
+      "end_byte": 387,
+      "text": "2"
+    },
+    {
+      "token": "0",
+      "start_byte": 387,
+      "end_byte": 388,
+      "text": "0"
+    },
+    {
+      "token": ",",
+      "start_byte": 388,
+      "end_byte": 389,
+      "text": ","
+    },
+    {
+      "token": "\u2581",
+      "start_byte": 389,
+      "end_byte": 390,
+      "text": " "
+    },
+    {
+      "token": "3",
+      "start_byte": 390,
+      "end_byte": 391,
+      "text": "3"
+    },
+    {
+      "token": "0",
+      "start_byte": 391,
+      "end_byte": 392,
+      "text": "0"
+    },
+    {
+      "token": ",",
+      "start_byte": 392,
+      "end_byte": 393,
+      "text": ","
+    },
+    {
+      "token": "\u2581",
+      "start_byte": 393,
+      "end_byte": 394,
+      "text": " "
+    },
+    {
+      "token": "4",
+      "start_byte": 394,
+      "end_byte": 395,
+      "text": "4"
+    },
+    {
+      "token": "0",
+      "start_byte": 395,
+      "end_byte": 396,
+      "text": "0"
+    },
+    {
+      "token": ",",
+      "start_byte": 396,
+      "end_byte": 397,
+      "text": ","
+    },
+    {
+      "token": "\u2581",
+      "start_byte": 397,
+      "end_byte": 398,
+      "text": " "
+    },
+    {
+      "token": "5",
+      "start_byte": 398,
+      "end_byte": 399,
+      "text": "5"
+    },
+    {
+      "token": "0",
+      "start_byte": 399,
+      "end_byte": 400,
+      "text": "0"
+    },
+    {
+      "token": "])",
+      "start_byte": 400,
+      "end_byte": 402,
+      "text": "])"
+    },
+    {
+      "token": "<0x0A>",
+      "start_byte": 402,
+      "end_byte": 403,
+      "text": "\n"
+    },
+    {
+      "token": "\u2581\u2581\u2581",
+      "start_byte": 403,
+      "end_byte": 406,
+      "text": "   "
+    },
+    {
+      "token": "\u2581av",
+      "start_byte": 406,
+      "end_byte": 409,
+      "text": " av"
+    },
+    {
+      "token": "g",
+      "start_byte": 409,
+      "end_byte": 410,
+      "text": "g"
+    },
+    {
+      "token": "\u2581=",
+      "start_byte": 410,
+      "end_byte": 412,
+      "text": " ="
+    },
+    {
+      "token": "\u2581processor",
+      "start_byte": 412,
+      "end_byte": 422,
+      "text": " processor"
+    },
+    {
+      "token": ".",
+      "start_byte": 422,
+      "end_byte": 423,
+      "text": "."
+    },
+    {
+      "token": "calcul",
+      "start_byte": 423,
+      "end_byte": 429,
+      "text": "calcul"
+    },
+    {
+      "token": "ate",
+      "start_byte": 429,
+      "end_byte": 432,
+      "text": "ate"
+    },
+    {
+      "token": "_",
+      "start_byte": 432,
+      "end_byte": 433,
+      "text": "_"
+    },
+    {
+      "token": "aver",
+      "start_byte": 433,
+      "end_byte": 437,
+      "text": "aver"
+    },
+    {
+      "token": "age",
+      "start_byte": 437,
+      "end_byte": 440,
+      "text": "age"
+    },
+    {
+      "token": "()",
+      "start_byte": 440,
+      "end_byte": 442,
+      "text": "()"
+    },
+    {
+      "token": "<0x0A>",
+      "start_byte": 442,
+      "end_byte": 443,
+      "text": "\n"
+    },
+    {
+      "token": "\u2581\u2581\u2581",
+      "start_byte": 443,
+      "end_byte": 446,
+      "text": "   "
+    },
+    {
+      "token": "\u2581print",
+      "start_byte": 446,
+      "end_byte": 452,
+      "text": " print"
+    },
+    {
+      "token": "(",
+      "start_byte": 452,
+      "end_byte": 453,
+      "text": "("
+    },
+    {
+      "token": "f",
+      "start_byte": 453,
+      "end_byte": 454,
+      "text": "f"
+    },
+    {
+      "token": "\"",
+      "start_byte": 454,
+      "end_byte": 455,
+      "text": "\""
+    },
+    {
+      "token": "The",
+      "start_byte": 455,
+      "end_byte": 458,
+      "text": "The"
+    },
+    {
+      "token": "\u2581average",
+      "start_byte": 458,
+      "end_byte": 466,
+      "text": " average"
+    },
+    {
+      "token": "\u2581is",
+      "start_byte": 466,
+      "end_byte": 469,
+      "text": " is"
+    },
+    {
+      "token": ":",
+      "start_byte": 469,
+      "end_byte": 470,
+      "text": ":"
+    },
+    {
+      "token": "\u2581{",
+      "start_byte": 470,
+      "end_byte": 472,
+      "text": " {"
+    },
+    {
+      "token": "av",
+      "start_byte": 472,
+      "end_byte": 474,
+      "text": "av"
+    },
+    {
+      "token": "g",
+      "start_byte": 474,
+      "end_byte": 475,
+      "text": "g"
+    },
+    {
+      "token": "}\")",
+      "start_byte": 475,
+      "end_byte": 478,
+      "text": "}\")"
+    }
+  ],
+  "misalignments": [
+    {
+      "type": "dotted_name",
+      "start_byte": 7,
+      "end_byte": 9,
+      "start_point": [
+        0,
+        7
+      ],
+      "end_point": [
+        0,
+        9
+      ],
+      "text": "os",
+      "depth": 2,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "identifier",
+      "start_byte": 7,
+      "end_byte": 9,
+      "start_point": [
+        0,
+        7
+      ],
+      "end_point": [
+        0,
+        9
+      ],
+      "text": "os",
+      "depth": 3,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "identifier",
+      "start_byte": 17,
+      "end_byte": 30,
+      "start_point": [
+        2,
+        6
+      ],
+      "end_point": [
+        2,
+        19
+      ],
+      "text": "DataProcessor",
+      "depth": 2,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "block",
+      "start_byte": 36,
+      "end_byte": 314,
+      "start_point": [
+        3,
+        4
+      ],
+      "end_point": [
+        11,
+        41
+      ],
+      "text": "def __init__(self, data):\n        self.data = data # Initialize data\n\n    def calculate_average(self):\n        \"\"\"This function calculates the average.\"\"\"\n        if not self.data:\n            return 0\n        total_sum = sum(self.data)\n        return total_sum / len(self.data)",
+      "depth": 2,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "function_definition",
+      "start_byte": 36,
+      "end_byte": 104,
+      "start_point": [
+        3,
+        4
+      ],
+      "end_point": [
+        4,
+        42
+      ],
+      "text": "def __init__(self, data):\n        self.data = data # Initialize data",
+      "depth": 3,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "def",
+      "start_byte": 36,
+      "end_byte": 39,
+      "start_point": [
+        3,
+        4
+      ],
+      "end_point": [
+        3,
+        7
+      ],
+      "text": "def",
+      "depth": 4,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "identifier",
+      "start_byte": 40,
+      "end_byte": 48,
+      "start_point": [
+        3,
+        8
+      ],
+      "end_point": [
+        3,
+        16
+      ],
+      "text": "__init__",
+      "depth": 4,
+      "start_misaligned": true,
+      "end_misaligned": true
+    },
+    {
+      "type": "parameters",
+      "start_byte": 48,
+      "end_byte": 60,
+      "start_point": [
+        3,
+        16
+      ],
+      "end_point": [
+        3,
+        28
+      ],
+      "text": "(self, data)",
+      "depth": 4,
+      "start_misaligned": true,
+      "end_misaligned": true
+    },
+    {
+      "type": "(",
+      "start_byte": 48,
+      "end_byte": 49,
+      "start_point": [
+        3,
+        16
+      ],
+      "end_point": [
+        3,
+        17
+      ],
+      "text": "(",
+      "depth": 5,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "identifier",
+      "start_byte": 55,
+      "end_byte": 59,
+      "start_point": [
+        3,
+        23
+      ],
+      "end_point": [
+        3,
+        27
+      ],
+      "text": "data",
+      "depth": 5,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": ")",
+      "start_byte": 59,
+      "end_byte": 60,
+      "start_point": [
+        3,
+        27
+      ],
+      "end_point": [
+        3,
+        28
+      ],
+      "text": ")",
+      "depth": 5,
+      "start_misaligned": false,
+      "end_misaligned": true
+    },
+    {
+      "type": ":",
+      "start_byte": 60,
+      "end_byte": 61,
+      "start_point": [
+        3,
+        28
+      ],
+      "end_point": [
+        3,
+        29
+      ],
+      "text": ":",
+      "depth": 4,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "block",
+      "start_byte": 70,
+      "end_byte": 104,
+      "start_point": [
+        4,
+        8
+      ],
+      "end_point": [
+        4,
+        42
+      ],
+      "text": "self.data = data # Initialize data",
+      "depth": 4,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "expression_statement",
+      "start_byte": 70,
+      "end_byte": 86,
+      "start_point": [
+        4,
+        8
+      ],
+      "end_point": [
+        4,
+        24
+      ],
+      "text": "self.data = data",
+      "depth": 5,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "assignment",
+      "start_byte": 70,
+      "end_byte": 86,
+      "start_point": [
+        4,
+        8
+      ],
+      "end_point": [
+        4,
+        24
+      ],
+      "text": "self.data = data",
+      "depth": 6,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "attribute",
+      "start_byte": 70,
+      "end_byte": 79,
+      "start_point": [
+        4,
+        8
+      ],
+      "end_point": [
+        4,
+        17
+      ],
+      "text": "self.data",
+      "depth": 7,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "identifier",
+      "start_byte": 70,
+      "end_byte": 74,
+      "start_point": [
+        4,
+        8
+      ],
+      "end_point": [
+        4,
+        12
+      ],
+      "text": "self",
+      "depth": 8,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "=",
+      "start_byte": 80,
+      "end_byte": 81,
+      "start_point": [
+        4,
+        18
+      ],
+      "end_point": [
+        4,
+        19
+      ],
+      "text": "=",
+      "depth": 7,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "identifier",
+      "start_byte": 82,
+      "end_byte": 86,
+      "start_point": [
+        4,
+        20
+      ],
+      "end_point": [
+        4,
+        24
+      ],
+      "text": "data",
+      "depth": 7,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "comment",
+      "start_byte": 87,
+      "end_byte": 104,
+      "start_point": [
+        4,
+        25
+      ],
+      "end_point": [
+        4,
+        42
+      ],
+      "text": "# Initialize data",
+      "depth": 5,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "function_definition",
+      "start_byte": 110,
+      "end_byte": 314,
+      "start_point": [
+        6,
+        4
+      ],
+      "end_point": [
+        11,
+        41
+      ],
+      "text": "def calculate_average(self):\n        \"\"\"This function calculates the average.\"\"\"\n        if not self.data:\n            return 0\n        total_sum = sum(self.data)\n        return total_sum / len(self.data)",
+      "depth": 3,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "def",
+      "start_byte": 110,
+      "end_byte": 113,
+      "start_point": [
+        6,
+        4
+      ],
+      "end_point": [
+        6,
+        7
+      ],
+      "text": "def",
+      "depth": 4,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "identifier",
+      "start_byte": 114,
+      "end_byte": 131,
+      "start_point": [
+        6,
+        8
+      ],
+      "end_point": [
+        6,
+        25
+      ],
+      "text": "calculate_average",
+      "depth": 4,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "parameters",
+      "start_byte": 131,
+      "end_byte": 137,
+      "start_point": [
+        6,
+        25
+      ],
+      "end_point": [
+        6,
+        31
+      ],
+      "text": "(self)",
+      "depth": 4,
+      "start_misaligned": false,
+      "end_misaligned": true
+    },
+    {
+      "type": ")",
+      "start_byte": 136,
+      "end_byte": 137,
+      "start_point": [
+        6,
+        30
+      ],
+      "end_point": [
+        6,
+        31
+      ],
+      "text": ")",
+      "depth": 5,
+      "start_misaligned": false,
+      "end_misaligned": true
+    },
+    {
+      "type": ":",
+      "start_byte": 137,
+      "end_byte": 138,
+      "start_point": [
+        6,
+        31
+      ],
+      "end_point": [
+        6,
+        32
+      ],
+      "text": ":",
+      "depth": 4,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "block",
+      "start_byte": 147,
+      "end_byte": 314,
+      "start_point": [
+        7,
+        8
+      ],
+      "end_point": [
+        11,
+        41
+      ],
+      "text": "\"\"\"This function calculates the average.\"\"\"\n        if not self.data:\n            return 0\n        total_sum = sum(self.data)\n        return total_sum / len(self.data)",
+      "depth": 4,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "expression_statement",
+      "start_byte": 147,
+      "end_byte": 190,
+      "start_point": [
+        7,
+        8
+      ],
+      "end_point": [
+        7,
+        51
+      ],
+      "text": "\"\"\"This function calculates the average.\"\"\"",
+      "depth": 5,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "string",
+      "start_byte": 147,
+      "end_byte": 190,
+      "start_point": [
+        7,
+        8
+      ],
+      "end_point": [
+        7,
+        51
+      ],
+      "text": "\"\"\"This function calculates the average.\"\"\"",
+      "depth": 6,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "string_start",
+      "start_byte": 147,
+      "end_byte": 150,
+      "start_point": [
+        7,
+        8
+      ],
+      "end_point": [
+        7,
+        11
+      ],
+      "text": "\"\"\"",
+      "depth": 7,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "string_content",
+      "start_byte": 150,
+      "end_byte": 187,
+      "start_point": [
+        7,
+        11
+      ],
+      "end_point": [
+        7,
+        48
+      ],
+      "text": "This function calculates the average.",
+      "depth": 7,
+      "start_misaligned": false,
+      "end_misaligned": true
+    },
+    {
+      "type": "string_end",
+      "start_byte": 187,
+      "end_byte": 190,
+      "start_point": [
+        7,
+        48
+      ],
+      "end_point": [
+        7,
+        51
+      ],
+      "text": "\"\"\"",
+      "depth": 7,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "if_statement",
+      "start_byte": 199,
+      "end_byte": 237,
+      "start_point": [
+        8,
+        8
+      ],
+      "end_point": [
+        9,
+        20
+      ],
+      "text": "if not self.data:\n            return 0",
+      "depth": 5,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "if",
+      "start_byte": 199,
+      "end_byte": 201,
+      "start_point": [
+        8,
+        8
+      ],
+      "end_point": [
+        8,
+        10
+      ],
+      "text": "if",
+      "depth": 6,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "not_operator",
+      "start_byte": 202,
+      "end_byte": 215,
+      "start_point": [
+        8,
+        11
+      ],
+      "end_point": [
+        8,
+        24
+      ],
+      "text": "not self.data",
+      "depth": 6,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "not",
+      "start_byte": 202,
+      "end_byte": 205,
+      "start_point": [
+        8,
+        11
+      ],
+      "end_point": [
+        8,
+        14
+      ],
+      "text": "not",
+      "depth": 7,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "attribute",
+      "start_byte": 206,
+      "end_byte": 215,
+      "start_point": [
+        8,
+        15
+      ],
+      "end_point": [
+        8,
+        24
+      ],
+      "text": "self.data",
+      "depth": 7,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "identifier",
+      "start_byte": 206,
+      "end_byte": 210,
+      "start_point": [
+        8,
+        15
+      ],
+      "end_point": [
+        8,
+        19
+      ],
+      "text": "self",
+      "depth": 8,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "block",
+      "start_byte": 229,
+      "end_byte": 237,
+      "start_point": [
+        9,
+        12
+      ],
+      "end_point": [
+        9,
+        20
+      ],
+      "text": "return 0",
+      "depth": 6,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "return_statement",
+      "start_byte": 229,
+      "end_byte": 237,
+      "start_point": [
+        9,
+        12
+      ],
+      "end_point": [
+        9,
+        20
+      ],
+      "text": "return 0",
+      "depth": 7,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "return",
+      "start_byte": 229,
+      "end_byte": 235,
+      "start_point": [
+        9,
+        12
+      ],
+      "end_point": [
+        9,
+        18
+      ],
+      "text": "return",
+      "depth": 8,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "expression_statement",
+      "start_byte": 246,
+      "end_byte": 272,
+      "start_point": [
+        10,
+        8
+      ],
+      "end_point": [
+        10,
+        34
+      ],
+      "text": "total_sum = sum(self.data)",
+      "depth": 5,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "assignment",
+      "start_byte": 246,
+      "end_byte": 272,
+      "start_point": [
+        10,
+        8
+      ],
+      "end_point": [
+        10,
+        34
+      ],
+      "text": "total_sum = sum(self.data)",
+      "depth": 6,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "identifier",
+      "start_byte": 246,
+      "end_byte": 255,
+      "start_point": [
+        10,
+        8
+      ],
+      "end_point": [
+        10,
+        17
+      ],
+      "text": "total_sum",
+      "depth": 7,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "=",
+      "start_byte": 256,
+      "end_byte": 257,
+      "start_point": [
+        10,
+        18
+      ],
+      "end_point": [
+        10,
+        19
+      ],
+      "text": "=",
+      "depth": 7,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "call",
+      "start_byte": 258,
+      "end_byte": 272,
+      "start_point": [
+        10,
+        20
+      ],
+      "end_point": [
+        10,
+        34
+      ],
+      "text": "sum(self.data)",
+      "depth": 7,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "identifier",
+      "start_byte": 258,
+      "end_byte": 261,
+      "start_point": [
+        10,
+        20
+      ],
+      "end_point": [
+        10,
+        23
+      ],
+      "text": "sum",
+      "depth": 8,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "return_statement",
+      "start_byte": 281,
+      "end_byte": 314,
+      "start_point": [
+        11,
+        8
+      ],
+      "end_point": [
+        11,
+        41
+      ],
+      "text": "return total_sum / len(self.data)",
+      "depth": 5,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "return",
+      "start_byte": 281,
+      "end_byte": 287,
+      "start_point": [
+        11,
+        8
+      ],
+      "end_point": [
+        11,
+        14
+      ],
+      "text": "return",
+      "depth": 6,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "binary_operator",
+      "start_byte": 288,
+      "end_byte": 314,
+      "start_point": [
+        11,
+        15
+      ],
+      "end_point": [
+        11,
+        41
+      ],
+      "text": "total_sum / len(self.data)",
+      "depth": 6,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "identifier",
+      "start_byte": 288,
+      "end_byte": 297,
+      "start_point": [
+        11,
+        15
+      ],
+      "end_point": [
+        11,
+        24
+      ],
+      "text": "total_sum",
+      "depth": 7,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "/",
+      "start_byte": 298,
+      "end_byte": 299,
+      "start_point": [
+        11,
+        25
+      ],
+      "end_point": [
+        11,
+        26
+      ],
+      "text": "/",
+      "depth": 7,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "call",
+      "start_byte": 300,
+      "end_byte": 314,
+      "start_point": [
+        11,
+        27
+      ],
+      "end_point": [
+        11,
+        41
+      ],
+      "text": "len(self.data)",
+      "depth": 7,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "identifier",
+      "start_byte": 300,
+      "end_byte": 303,
+      "start_point": [
+        11,
+        27
+      ],
+      "end_point": [
+        11,
+        30
+      ],
+      "text": "len",
+      "depth": 8,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "identifier",
+      "start_byte": 320,
+      "end_byte": 333,
+      "start_point": [
+        13,
+        4
+      ],
+      "end_point": [
+        13,
+        17
+      ],
+      "text": "main_function",
+      "depth": 2,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "parameters",
+      "start_byte": 333,
+      "end_byte": 349,
+      "start_point": [
+        13,
+        17
+      ],
+      "end_point": [
+        13,
+        33
+      ],
+      "text": "(file_path: str)",
+      "depth": 2,
+      "start_misaligned": false,
+      "end_misaligned": true
+    },
+    {
+      "type": "type",
+      "start_byte": 345,
+      "end_byte": 348,
+      "start_point": [
+        13,
+        29
+      ],
+      "end_point": [
+        13,
+        32
+      ],
+      "text": "str",
+      "depth": 4,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "identifier",
+      "start_byte": 345,
+      "end_byte": 348,
+      "start_point": [
+        13,
+        29
+      ],
+      "end_point": [
+        13,
+        32
+      ],
+      "text": "str",
+      "depth": 5,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": ")",
+      "start_byte": 348,
+      "end_byte": 349,
+      "start_point": [
+        13,
+        32
+      ],
+      "end_point": [
+        13,
+        33
+      ],
+      "text": ")",
+      "depth": 3,
+      "start_misaligned": false,
+      "end_misaligned": true
+    },
+    {
+      "type": ":",
+      "start_byte": 349,
+      "end_byte": 350,
+      "start_point": [
+        13,
+        33
+      ],
+      "end_point": [
+        13,
+        34
+      ],
+      "text": ":",
+      "depth": 2,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "block",
+      "start_byte": 355,
+      "end_byte": 478,
+      "start_point": [
+        14,
+        4
+      ],
+      "end_point": [
+        16,
+        35
+      ],
+      "text": "processor = DataProcessor([10, 20, 30, 40, 50])\n    avg = processor.calculate_average()\n    print(f\"The average is: {avg}\")",
+      "depth": 2,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "expression_statement",
+      "start_byte": 355,
+      "end_byte": 402,
+      "start_point": [
+        14,
+        4
+      ],
+      "end_point": [
+        14,
+        51
+      ],
+      "text": "processor = DataProcessor([10, 20, 30, 40, 50])",
+      "depth": 3,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "assignment",
+      "start_byte": 355,
+      "end_byte": 402,
+      "start_point": [
+        14,
+        4
+      ],
+      "end_point": [
+        14,
+        51
+      ],
+      "text": "processor = DataProcessor([10, 20, 30, 40, 50])",
+      "depth": 4,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "identifier",
+      "start_byte": 355,
+      "end_byte": 364,
+      "start_point": [
+        14,
+        4
+      ],
+      "end_point": [
+        14,
+        13
+      ],
+      "text": "processor",
+      "depth": 5,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "=",
+      "start_byte": 365,
+      "end_byte": 366,
+      "start_point": [
+        14,
+        14
+      ],
+      "end_point": [
+        14,
+        15
+      ],
+      "text": "=",
+      "depth": 5,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "call",
+      "start_byte": 367,
+      "end_byte": 402,
+      "start_point": [
+        14,
+        16
+      ],
+      "end_point": [
+        14,
+        51
+      ],
+      "text": "DataProcessor([10, 20, 30, 40, 50])",
+      "depth": 5,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "identifier",
+      "start_byte": 367,
+      "end_byte": 380,
+      "start_point": [
+        14,
+        16
+      ],
+      "end_point": [
+        14,
+        29
+      ],
+      "text": "DataProcessor",
+      "depth": 6,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "(",
+      "start_byte": 380,
+      "end_byte": 381,
+      "start_point": [
+        14,
+        29
+      ],
+      "end_point": [
+        14,
+        30
+      ],
+      "text": "(",
+      "depth": 7,
+      "start_misaligned": false,
+      "end_misaligned": true
+    },
+    {
+      "type": "list",
+      "start_byte": 381,
+      "end_byte": 401,
+      "start_point": [
+        14,
+        30
+      ],
+      "end_point": [
+        14,
+        50
+      ],
+      "text": "[10, 20, 30, 40, 50]",
+      "depth": 7,
+      "start_misaligned": true,
+      "end_misaligned": true
+    },
+    {
+      "type": "[",
+      "start_byte": 381,
+      "end_byte": 382,
+      "start_point": [
+        14,
+        30
+      ],
+      "end_point": [
+        14,
+        31
+      ],
+      "text": "[",
+      "depth": 8,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "]",
+      "start_byte": 400,
+      "end_byte": 401,
+      "start_point": [
+        14,
+        49
+      ],
+      "end_point": [
+        14,
+        50
+      ],
+      "text": "]",
+      "depth": 8,
+      "start_misaligned": false,
+      "end_misaligned": true
+    },
+    {
+      "type": ")",
+      "start_byte": 401,
+      "end_byte": 402,
+      "start_point": [
+        14,
+        50
+      ],
+      "end_point": [
+        14,
+        51
+      ],
+      "text": ")",
+      "depth": 7,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "expression_statement",
+      "start_byte": 407,
+      "end_byte": 442,
+      "start_point": [
+        15,
+        4
+      ],
+      "end_point": [
+        15,
+        39
+      ],
+      "text": "avg = processor.calculate_average()",
+      "depth": 3,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "assignment",
+      "start_byte": 407,
+      "end_byte": 442,
+      "start_point": [
+        15,
+        4
+      ],
+      "end_point": [
+        15,
+        39
+      ],
+      "text": "avg = processor.calculate_average()",
+      "depth": 4,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "identifier",
+      "start_byte": 407,
+      "end_byte": 410,
+      "start_point": [
+        15,
+        4
+      ],
+      "end_point": [
+        15,
+        7
+      ],
+      "text": "avg",
+      "depth": 5,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "=",
+      "start_byte": 411,
+      "end_byte": 412,
+      "start_point": [
+        15,
+        8
+      ],
+      "end_point": [
+        15,
+        9
+      ],
+      "text": "=",
+      "depth": 5,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "call",
+      "start_byte": 413,
+      "end_byte": 442,
+      "start_point": [
+        15,
+        10
+      ],
+      "end_point": [
+        15,
+        39
+      ],
+      "text": "processor.calculate_average()",
+      "depth": 5,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "attribute",
+      "start_byte": 413,
+      "end_byte": 440,
+      "start_point": [
+        15,
+        10
+      ],
+      "end_point": [
+        15,
+        37
+      ],
+      "text": "processor.calculate_average",
+      "depth": 6,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "identifier",
+      "start_byte": 413,
+      "end_byte": 422,
+      "start_point": [
+        15,
+        10
+      ],
+      "end_point": [
+        15,
+        19
+      ],
+      "text": "processor",
+      "depth": 7,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "(",
+      "start_byte": 440,
+      "end_byte": 441,
+      "start_point": [
+        15,
+        37
+      ],
+      "end_point": [
+        15,
+        38
+      ],
+      "text": "(",
+      "depth": 7,
+      "start_misaligned": false,
+      "end_misaligned": true
+    },
+    {
+      "type": ")",
+      "start_byte": 441,
+      "end_byte": 442,
+      "start_point": [
+        15,
+        38
+      ],
+      "end_point": [
+        15,
+        39
+      ],
+      "text": ")",
+      "depth": 7,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "expression_statement",
+      "start_byte": 447,
+      "end_byte": 478,
+      "start_point": [
+        16,
+        4
+      ],
+      "end_point": [
+        16,
+        35
+      ],
+      "text": "print(f\"The average is: {avg}\")",
+      "depth": 3,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "call",
+      "start_byte": 447,
+      "end_byte": 478,
+      "start_point": [
+        16,
+        4
+      ],
+      "end_point": [
+        16,
+        35
+      ],
+      "text": "print(f\"The average is: {avg}\")",
+      "depth": 4,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "identifier",
+      "start_byte": 447,
+      "end_byte": 452,
+      "start_point": [
+        16,
+        4
+      ],
+      "end_point": [
+        16,
+        9
+      ],
+      "text": "print",
+      "depth": 5,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "string",
+      "start_byte": 453,
+      "end_byte": 477,
+      "start_point": [
+        16,
+        10
+      ],
+      "end_point": [
+        16,
+        34
+      ],
+      "text": "f\"The average is: {avg}\"",
+      "depth": 6,
+      "start_misaligned": false,
+      "end_misaligned": true
+    },
+    {
+      "type": "string_content",
+      "start_byte": 455,
+      "end_byte": 471,
+      "start_point": [
+        16,
+        12
+      ],
+      "end_point": [
+        16,
+        28
+      ],
+      "text": "The average is: ",
+      "depth": 7,
+      "start_misaligned": false,
+      "end_misaligned": true
+    },
+    {
+      "type": "interpolation",
+      "start_byte": 471,
+      "end_byte": 476,
+      "start_point": [
+        16,
+        28
+      ],
+      "end_point": [
+        16,
+        33
+      ],
+      "text": "{avg}",
+      "depth": 7,
+      "start_misaligned": true,
+      "end_misaligned": true
+    },
+    {
+      "type": "{",
+      "start_byte": 471,
+      "end_byte": 472,
+      "start_point": [
+        16,
+        28
+      ],
+      "end_point": [
+        16,
+        29
+      ],
+      "text": "{",
+      "depth": 8,
+      "start_misaligned": true,
+      "end_misaligned": false
+    },
+    {
+      "type": "}",
+      "start_byte": 475,
+      "end_byte": 476,
+      "start_point": [
+        16,
+        32
+      ],
+      "end_point": [
+        16,
+        33
+      ],
+      "text": "}",
+      "depth": 8,
+      "start_misaligned": false,
+      "end_misaligned": true
+    },
+    {
+      "type": "string_end",
+      "start_byte": 476,
+      "end_byte": 477,
+      "start_point": [
+        16,
+        33
+      ],
+      "end_point": [
+        16,
+        34
+      ],
+      "text": "\"",
+      "depth": 7,
+      "start_misaligned": true,
+      "end_misaligned": true
+    },
+    {
+      "type": ")",
+      "start_byte": 477,
+      "end_byte": 478,
+      "start_point": [
+        16,
+        34
+      ],
+      "end_point": [
+        16,
+        35
+      ],
+      "text": ")",
+      "depth": 6,
+      "start_misaligned": true,
+      "end_misaligned": false
+    }
+  ],
+  "type_counts": {
+    "dotted_name": 1,
+    "identifier": 19,
+    "block": 5,
+    "function_definition": 2,
+    "def": 2,
+    "parameters": 3,
+    "(": 3,
+    ")": 6,
+    ":": 3,
+    "expression_statement": 6,
+    "assignment": 4,
+    "attribute": 3,
+    "=": 4,
+    "comment": 1,
+    "string": 2,
+    "string_start": 1,
+    "string_content": 2,
+    "string_end": 2,
+    "if_statement": 1,
+    "if": 1,
+    "not_operator": 1,
+    "not": 1,
+    "return_statement": 2,
+    "return": 2,
+    "call": 5,
+    "binary_operator": 1,
+    "/": 1,
+    "type": 1,
+    "list": 1,
+    "[": 1,
+    "]": 1,
+    "interpolation": 1,
+    "{": 1,
+    "}": 1
+  }
+}
