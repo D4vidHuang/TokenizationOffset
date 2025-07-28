@@ -14,7 +14,7 @@ DEFAULT_MODELS = [
     "codellama/CodeLlama-7b-hf",    # Meta专门为代码优化的模型
     "bigcode/starcoder2-3b"         # BigCode项目（ServiceNow & Hugging Face）
 ]
-DEFAULT_CODE_PATH = "code_samples"
+DEFAULT_CODE_PATH = "code_samples/python"
 DEFAULT_LANGUAGE = "python"
 
 # --- 解析命令行参数 ---
@@ -131,10 +131,34 @@ def analyze_file(file_path, parser, models_to_test):
     
     return file_results
 
+# 在main.py中添加一个文件扩展名映射
+def get_file_extension(language):
+    """根据语言名称返回对应的文件扩展名"""
+    extension_map = {
+        "python": ".py",
+        "javascript": ".js",
+        "typescript": ".ts",
+        "java": ".java",
+        "c": ".c",
+        "cpp": ".cpp",
+        "csharp": ".cs",
+        "go": ".go",
+        "ruby": ".rb",
+        "rust": ".rs",
+        "php": ".php",
+        "swift": ".swift"
+    }
+    return extension_map.get(language, f".{language}")
+
 def main():
     """主函数，执行分析并生成报告"""
     args = parse_args()
     print("开始分析...")
+    
+    # 打印当前配置
+    print(f"使用模型: {args.model if args.model else '默认模型列表'}")
+    print(f"代码路径: {args.code_path}")
+    print(f"代码语言: {args.language}")
     
     # 确保build目录存在
     os.makedirs("build", exist_ok=True)
@@ -159,7 +183,15 @@ def main():
     
     if os.path.isdir(code_path):
         # 如果是目录，分析目录中所有相应语言的文件
-        file_extension = ".py" if language == "python" else f".{language}"
+        #file_extension = ".py" if language == "python" else f".{language}"
+        file_extension = get_file_extension(language)
+        # 自动在code_samples下查找对应语言的文件夹
+        if "code_samples" in code_path:
+            language_specific_path = os.path.join("code_samples", language)
+            if os.path.exists(language_specific_path) and os.path.isdir(language_specific_path):
+                code_path = language_specific_path
+                print(f"自动切换到语言特定文件夹: {code_path}")
+        
         code_files = glob.glob(os.path.join(code_path, f"*{file_extension}"))
         
         if not code_files:
@@ -188,41 +220,43 @@ def main():
     # 创建结果目录
     os.makedirs("results", exist_ok=True)
     
-    # 保存CSV报告
+    # Save CSV report
     report_path = "results/alignment_report.csv"
     df.to_csv(report_path, index=False)
-    print(f"\n完整报告已保存到{report_path}")
+    print(f"\nComplete report has been saved to {report_path}")
 
-    # 按模型分组计算平均对齐分数
+    # Calculate average alignment scores grouped by model
     model_avg = df.groupby('model_name')['alignment_score_percent'].mean().reset_index()
     model_avg_sorted = model_avg.sort_values("alignment_score_percent", ascending=False)
     
-    # 可视化 - 模型平均对齐分数
+    # Visualization - Model average alignment scores
     plt.figure(figsize=(12, 7))
     sns.barplot(x="alignment_score_percent", y="model_name", data=model_avg_sorted, palette="viridis", hue="model_name", dodge=False)
-    plt.title("LLM分词器与Tree-sitter语法边界对齐分析 (模型平均)")
-    plt.xlabel("对齐分数 (%)")
-    plt.ylabel("模型")
+    plt.title("LLM Tokenizer and Tree-sitter Grammar Boundary Alignment Analysis (Model Average)")
+    plt.xlabel("Alignment Score (%)")
+    plt.ylabel("Model")
     plt.xlim(0, 100)
     plt.tight_layout()
     
     chart_path = "results/alignment_chart_by_model.png"
     plt.savefig(chart_path)
-    print(f"模型对比图表已保存到{chart_path}")
-    
-    # 如果分析了多个文件，还可以按文件生成图表
+    print(f"Model comparison chart has been saved to {chart_path}")
+
+
+    # If multiple files were analyzed, generate a chart by file
     if len(df['file_name'].unique()) > 1:
         plt.figure(figsize=(14, 8))
         sns.barplot(x="alignment_score_percent", y="file_name", hue="model_name", data=df, palette="viridis")
-        plt.title("各文件的模型对齐分数对比")
-        plt.xlabel("对齐分数 (%)")
-        plt.ylabel("文件")
+        plt.title("Model Alignment Score Comparison by File")
+        plt.xlabel("Alignment Score (%)")
+        plt.ylabel("File")
         plt.xlim(0, 100)
         plt.tight_layout()
         
         file_chart_path = "results/alignment_chart_by_file.png"
         plt.savefig(file_chart_path)
-        print(f"文件对比图表已保存到{file_chart_path}")
+        print(f"File comparison chart has been saved to {file_chart_path}")
+
 
 
 if __name__ == "__main__":
