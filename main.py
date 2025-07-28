@@ -32,17 +32,44 @@ def parse_args():
 # --- 2. 初始化 Tree-sitter 解析器 ---
 def setup_tree_sitter_parser(language_name: str) -> Parser:
     """编译并加载指定语言的tree-sitter解析器"""
-    library_path = 'build/languages.so'
-    repo_path = f'vendor/tree-sitter-{language_name}'
+    # 为每种语言使用单独的库文件，避免符号冲突
+    library_path = f'build/languages_{language_name}.so'
+    
+    # 获取仓库信息
+    repo_info = get_tree_sitter_repo_info(language_name)
+    repo_path = f'vendor/{repo_info["local_name"]}'
     
     if not os.path.exists(repo_path):
         raise FileNotFoundError(f"Tree-sitter grammar for {language_name} not found in {repo_path}")
+    
+    # 特殊语言处理
+    if language_name == "typescript":
+        # TypeScript需要指定tsx或ts
+        Language.build_library(
+            library_path,
+            [
+                f"{repo_path}/typescript",
+                f"{repo_path}/tsx"
+            ]
+        )
+        # 默认使用typescript而不是tsx
+        lang = Language(library_path, "typescript")
+    else:
+        # 确保每次都重新构建库文件
+        if os.path.exists(library_path):
+            os.remove(library_path)
+            
+        Language.build_library(
+            library_path,
+            [repo_path]
+        )
         
-    Language.build_library(
-        library_path,
-        [repo_path]
-    )
-    lang = Language(library_path, language_name)
+        # 对于C#，tree-sitter使用c_sharp作为语言标识符
+        if language_name == "csharp":
+            lang = Language(library_path, "c_sharp")
+        else:
+            lang = Language(library_path, language_name)
+    
     parser = Parser()
     parser.set_language(lang)
     return parser
@@ -88,7 +115,7 @@ def get_tokenizer_token_boundaries(model_name: str, code_string: str) -> set:
     return boundaries
 
 # --- 5. 主分析流程 ---
-def analyze_file(file_path, parser, models_to_test):
+def analyze_file(file_path, parser, models_to_test, language):
     """分析单个文件"""
     print(f"\n分析文件: {file_path}")
     
@@ -118,6 +145,7 @@ def analyze_file(file_path, parser, models_to_test):
             file_results.append({
                 "file_name": os.path.basename(file_path),
                 "model_name": model_name,
+                "language": language,
                 "grammar_boundaries": len(grammar_boundaries),
                 "tokenizer_boundaries": len(tokenizer_boundaries),
                 "mismatched_boundaries": len(mismatched_boundaries),
@@ -131,7 +159,38 @@ def analyze_file(file_path, parser, models_to_test):
     
     return file_results
 
-# 在main.py中添加一个文件扩展名映射
+# 获取Tree-sitter仓库信息
+def get_tree_sitter_repo_info(language):
+    """获取指定语言的Tree-sitter仓库信息"""
+    # 默认仓库信息
+    default_info = {
+        'repo_url': f"https://github.com/tree-sitter/tree-sitter-{language}.git",
+        'local_name': f"tree-sitter-{language}"
+    }
+    
+    # 特殊情况处理
+    special_cases = {
+        "cpp": {
+            'repo_url': "https://github.com/tree-sitter/tree-sitter-cpp.git",
+            'local_name': "tree-sitter-cpp"
+        },
+        "csharp": {
+            'repo_url': "https://github.com/tree-sitter/tree-sitter-c-sharp.git",
+            'local_name': "tree-sitter-c-sharp"
+        },
+        "typescript": {
+            'repo_url': "https://github.com/tree-sitter/tree-sitter-typescript.git",
+            'local_name': "tree-sitter-typescript"
+        },
+        "scala": {
+            'repo_url': "https://github.com/tree-sitter/tree-sitter-scala.git",
+            'local_name': "tree-sitter-scala"
+        }
+    }
+    
+    return special_cases.get(language, default_info)
+
+# 文件扩展名映射
 def get_file_extension(language):
     """根据语言名称返回对应的文件扩展名"""
     extension_map = {
@@ -146,7 +205,8 @@ def get_file_extension(language):
         "ruby": ".rb",
         "rust": ".rs",
         "php": ".php",
-        "swift": ".swift"
+        "swift": ".swift",
+        "scala": ".scala"
     }
     return extension_map.get(language, f".{language}")
 
@@ -169,11 +229,17 @@ def main():
     # 确定语言和解析器
     language = args.language
     
+    # 获取Tree-sitter仓库信息
+    repo_info = get_tree_sitter_repo_info(language)
+    repo_path = f"vendor/{repo_info['local_name']}"
+    
+    # 确保vendor目录存在
+    os.makedirs("vendor", exist_ok=True)
+    
     # 克隆tree-sitter语言仓库（如果不存在）
-    repo_path = f"vendor/tree-sitter-{language}"
     if not os.path.exists(repo_path):
-        print(f"克隆tree-sitter-{language}仓库...")
-        os.system(f"git clone https://github.com/tree-sitter/tree-sitter-{language}.git {repo_path}")
+        print(f"克隆{repo_info['repo_url']}仓库...")
+        os.system(f"git clone {repo_info['repo_url']} {repo_path}")
     
     parser = setup_tree_sitter_parser(language)
     
@@ -199,7 +265,7 @@ def main():
             return
             
         for file_path in code_files:
-            file_results = analyze_file(file_path, parser, models_to_test)
+            file_results = analyze_file(file_path, parser, models_to_test, language)
             all_results.extend(file_results)
     else:
         # 如果是单个文件
@@ -207,7 +273,7 @@ def main():
             print(f"文件{code_path}不存在")
             return
             
-        file_results = analyze_file(code_path, parser, models_to_test)
+        file_results = analyze_file(code_path, parser, models_to_test, language)
         all_results.extend(file_results)
     
     # --- 6. 生成报告和可视化 ---
@@ -220,42 +286,46 @@ def main():
     # 创建结果目录
     os.makedirs("results", exist_ok=True)
     
-    # Save CSV report
-    report_path = "results/alignment_report.csv"
+    # 添加语言信息到结果中
+    language = args.language
+    for result in all_results:
+        result["language"] = language
+    
+    # 保存CSV报告
+    report_path = f"results/alignment_report_{language}.csv"
     df.to_csv(report_path, index=False)
-    print(f"\nComplete report has been saved to {report_path}")
+    print(f"\n完整报告已保存到{report_path}")
 
-    # Calculate average alignment scores grouped by model
+    # 按模型分组计算平均对齐分数
     model_avg = df.groupby('model_name')['alignment_score_percent'].mean().reset_index()
     model_avg_sorted = model_avg.sort_values("alignment_score_percent", ascending=False)
     
-    # Visualization - Model average alignment scores
+    # 可视化 - 模型平均对齐分数
     plt.figure(figsize=(12, 7))
     sns.barplot(x="alignment_score_percent", y="model_name", data=model_avg_sorted, palette="viridis", hue="model_name", dodge=False)
-    plt.title("LLM Tokenizer and Tree-sitter Grammar Boundary Alignment Analysis (Model Average)")
-    plt.xlabel("Alignment Score (%)")
-    plt.ylabel("Model")
+    plt.title(f"{language.upper()}语言 - LLM分词器与Tree-sitter语法边界对齐分析")
+    plt.xlabel("对齐分数 (%)")
+    plt.ylabel("模型")
     plt.xlim(0, 100)
     plt.tight_layout()
     
-    chart_path = "results/alignment_chart_by_model.png"
+    chart_path = f"results/alignment_chart_{language}_by_model.png"
     plt.savefig(chart_path)
-    print(f"Model comparison chart has been saved to {chart_path}")
+    print(f"模型对比图表已保存到{chart_path}")
 
-
-    # If multiple files were analyzed, generate a chart by file
+    # 如果分析了多个文件，还可以按文件生成图表
     if len(df['file_name'].unique()) > 1:
         plt.figure(figsize=(14, 8))
         sns.barplot(x="alignment_score_percent", y="file_name", hue="model_name", data=df, palette="viridis")
-        plt.title("Model Alignment Score Comparison by File")
-        plt.xlabel("Alignment Score (%)")
-        plt.ylabel("File")
+        plt.title(f"{language.upper()}语言 - 各文件的模型对齐分数对比")
+        plt.xlabel("对齐分数 (%)")
+        plt.ylabel("文件")
         plt.xlim(0, 100)
         plt.tight_layout()
         
-        file_chart_path = "results/alignment_chart_by_file.png"
+        file_chart_path = f"results/alignment_chart_{language}_by_file.png"
         plt.savefig(file_chart_path)
-        print(f"File comparison chart has been saved to {file_chart_path}")
+        print(f"文件对比图表已保存到{file_chart_path}")
 
 
 
