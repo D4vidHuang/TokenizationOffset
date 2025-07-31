@@ -55,13 +55,61 @@ plt.rcParams['axes.unicode_minus'] = False
 class TreeSitterSetup:
     """Tree-sitter 设置和管理类"""
     
+    # 支持的语言及其仓库信息
+    SUPPORTED_LANGUAGES = {
+        'python': 'https://github.com/tree-sitter/tree-sitter-python.git',
+        'javascript': 'https://github.com/tree-sitter/tree-sitter-javascript.git',
+        'typescript': 'https://github.com/tree-sitter/tree-sitter-typescript.git',
+        'java': 'https://github.com/tree-sitter/tree-sitter-java.git',
+        'c': 'https://github.com/tree-sitter/tree-sitter-c.git',
+        'cpp': 'https://github.com/tree-sitter/tree-sitter-cpp.git',
+        'csharp': 'https://github.com/tree-sitter/tree-sitter-c-sharp.git',
+        'go': 'https://github.com/tree-sitter/tree-sitter-go.git',
+        'ruby': 'https://github.com/tree-sitter/tree-sitter-ruby.git',
+        'rust': 'https://github.com/tree-sitter/tree-sitter-rust.git',
+        'scala': 'https://github.com/tree-sitter/tree-sitter-scala.git'
+    }
+    
+    # 语言名称映射（用于 tree-sitter Language 构造）
+    LANGUAGE_NAMES = {
+        'python': 'python',
+        'javascript': 'javascript',
+        'typescript': 'typescript',
+        'java': 'java',
+        'c': 'c',
+        'cpp': 'cpp',
+        'csharp': 'c_sharp',
+        'go': 'go',
+        'ruby': 'ruby',
+        'rust': 'rust',
+        'scala': 'scala'
+    }
+    
+    # 文件扩展名映射
+    FILE_EXTENSIONS = {
+        'python': ['.py'],
+        'javascript': ['.js'],
+        'typescript': ['.ts'],
+        'java': ['.java'],
+        'c': ['.c', '.h'],
+        'cpp': ['.cpp', '.cc', '.cxx', '.hpp', '.hxx'],
+        'csharp': ['.cs'],
+        'go': ['.go'],
+        'ruby': ['.rb'],
+        'rust': ['.rs'],
+        'scala': ['.scala']
+    }
+    
     def __init__(self):
         self.vendor_dir = Path("vendor")
         self.build_dir = Path("build")
         self.languages_so = self.build_dir / "languages.so"
         
-    def setup_python_parser(self) -> Parser:
-        """设置 Python 语言的 tree-sitter 解析器"""
+    def setup_parser(self, language: str) -> Parser:
+        """设置指定语言的 tree-sitter 解析器"""
+        
+        if language not in self.SUPPORTED_LANGUAGES:
+            raise ValueError(f"不支持的语言: {language}. 支持的语言: {list(self.SUPPORTED_LANGUAGES.keys())}")
         
         # 创建必要的目录
         self.vendor_dir.mkdir(exist_ok=True)
@@ -69,39 +117,78 @@ class TreeSitterSetup:
         
         # 检查是否已经编译过
         if not self.languages_so.exists():
-            self._build_python_language()
+            self._build_all_languages()
         
         # 创建解析器
         try:
-            python_language = Language(str(self.languages_so), 'python')
+            language_name = self.LANGUAGE_NAMES[language]
+            lang = Language(str(self.languages_so), language_name)
             parser = Parser()
-            parser.set_language(python_language)
+            parser.set_language(lang)
             return parser
         except Exception as e:
-            print(f"加载 Python 语言失败: {e}")
+            print(f"加载 {language} 语言失败: {e}")
             print("尝试重新编译...")
-            self._build_python_language()
-            python_language = Language(str(self.languages_so), 'python')
+            self._build_all_languages()
+            language_name = self.LANGUAGE_NAMES[language]
+            lang = Language(str(self.languages_so), language_name)
             parser = Parser()
-            parser.set_language(python_language)
+            parser.set_language(lang)
             return parser
     
-    def _build_python_language(self):
-        """编译 Python 语言的 tree-sitter 库"""
-        python_repo = self.vendor_dir / "tree-sitter-python"
+    def _build_all_languages(self):
+        """编译所有支持语言的 tree-sitter 库"""
+        print("正在准备编译所有支持的语言...")
         
-        # 如果仓库不存在，克隆它
-        if not python_repo.exists():
-            print("正在克隆 tree-sitter-python 仓库...")
-            os.system(f"git clone https://github.com/tree-sitter/tree-sitter-python.git {python_repo}")
+        # 克隆所有语言仓库
+        repo_paths = []
+        for language, repo_url in self.SUPPORTED_LANGUAGES.items():
+            repo_path = self.vendor_dir / f"tree-sitter-{language}"
+            
+            # 特殊处理一些仓库名称
+            if language == 'csharp':
+                repo_path = self.vendor_dir / "tree-sitter-c-sharp"
+            
+            if not repo_path.exists():
+                print(f"正在克隆 {language} 仓库...")
+                result = os.system(f"git clone {repo_url} {repo_path}")
+                if result != 0:
+                    print(f"警告: 克隆 {language} 仓库失败")
+                    continue
+            
+            repo_paths.append(str(repo_path))
         
         # 编译语言库
-        print("正在编译 Python 语言库...")
-        Language.build_library(
-            str(self.languages_so),
-            [str(python_repo)]
-        )
-        print("编译完成！")
+        if repo_paths:
+            print("正在编译语言库...")
+            try:
+                Language.build_library(str(self.languages_so), repo_paths)
+                print("编译完成！")
+            except Exception as e:
+                print(f"编译失败: {e}")
+                # 尝试逐个编译
+                self._build_languages_individually(repo_paths)
+    
+    def _build_languages_individually(self, repo_paths):
+        """逐个编译语言库（备用方案）"""
+        print("尝试逐个编译语言...")
+        successful_paths = []
+        
+        for repo_path in repo_paths:
+            try:
+                temp_so = self.build_dir / f"temp_{Path(repo_path).name}.so"
+                Language.build_library(str(temp_so), [repo_path])
+                successful_paths.append(repo_path)
+                print(f"✓ {Path(repo_path).name} 编译成功")
+            except Exception as e:
+                print(f"✗ {Path(repo_path).name} 编译失败: {e}")
+        
+        if successful_paths:
+            try:
+                Language.build_library(str(self.languages_so), successful_paths)
+                print(f"成功编译 {len(successful_paths)} 种语言")
+            except Exception as e:
+                print(f"最终编译失败: {e}")
 
 
 class RuleLevelAlignmentAnalyzer:
