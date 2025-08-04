@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-简化版测试脚本 - 配合 quick_analyzer.py 使用
-测试基本的 Tree-sitter 解析和对齐分数计算功能
+Simplified Test Script - Works with quick_analyzer.py
+Tests basic Tree-sitter parsing and alignment score calculation functionality
 """
 
 import os
@@ -12,71 +12,71 @@ from tree_sitter import Language, Parser
 from transformers import AutoTokenizer
 
 def test_quick_analyzer_functionality():
-    """测试 quick_analyzer.py 的核心功能"""
+    """Test core functionality of quick_analyzer.py"""
     print("=" * 60)
-    print("Quick Analyzer 功能测试")
+    print("Quick Analyzer Functionality Test")
     print("=" * 60)
     
     try:
-        # 检查编译好的语言库
+        # Check compiled language libraries
         build_dir = Path('./build')
         python_library_path = build_dir / 'languages_python.so'
         
         if not python_library_path.exists():
-            print("❌ 未找到 Python 语言库")
-            print("请先运行 quick_analyzer.py 来编译语言库")
+            print("❌ Python language library not found")
+            print("Please run quick_analyzer.py first to compile language libraries")
             return False
         
-        print("✓ 找到 Python 语言库")
+        print("✓ Found Python language library")
         
-        # 测试 Python 解析器
-        print("\n正在测试 Python 解析器...")
+        # Test Python parser
+        print("\nTesting Python parser...")
         parser = Parser()
         
         try:
             python_language = Language(str(python_library_path), 'python')
             parser.set_language(python_language)
-            print("✓ Python 解析器加载成功")
+            print("✓ Python parser loaded successfully")
         except Exception as e:
-            print(f"❌ Python 解析器加载失败: {e}")
+            print(f"❌ Python parser loading failed: {e}")
             return False
         
-        # 初始化 tokenizer
-        print("\n正在初始化 tokenizer...")
+        # Initialize tokenizer
+        print("\nInitializing tokenizer...")
         try:
             tokenizer = AutoTokenizer.from_pretrained('gpt2')
-            print("✓ GPT-2 tokenizer 加载成功")
+            print("✓ GPT-2 tokenizer loaded successfully")
         except Exception as e:
-            print(f"❌ Tokenizer 加载失败: {e}")
+            print(f"❌ Tokenizer loading failed: {e}")
             return False
         
-        # 测试代码样本
+        # Test code sample
         test_code = '''
 def fibonacci(n):
-    """计算斐波那契数列"""
+    """Calculate Fibonacci sequence"""
     if n <= 1:
         return n
     return fibonacci(n-1) + fibonacci(n-2)
 
-# 测试函数
+# Test function
 for i in range(10):
     result = fibonacci(i)
     print(f"fibonacci({i}) = {result}")
 '''
         
-        print("\n正在分析测试代码...")
+        print("\nAnalyzing test code...")
         
-        # 解析代码
+        # Parse code
         code_bytes = test_code.encode('utf-8')
         tree = parser.parse(code_bytes)
         
         if tree.root_node.has_error:
-            print("❌ 代码解析出现错误")
+            print("❌ Code parsing error")
             return False
         
-        print("✓ 代码解析成功")
+        print("✓ Code parsed successfully")
         
-        # 提取语法规则
+        # Extract syntax rules
         def extract_rules(node, rules=None):
             if rules is None:
                 rules = []
@@ -97,19 +97,19 @@ for i in range(10):
             return rules
         
         rules = extract_rules(tree.root_node)
-        print(f"✓ 提取到 {len(rules)} 个语法规则")
+        print(f"✓ Extracted {len(rules)} syntax rules")
         
         # Tokenization
         tokens = tokenizer.encode(test_code)
         token_texts = [tokenizer.decode([token]) for token in tokens]
-        print(f"✓ 生成 {len(tokens)} 个 tokens")
+        print(f"✓ Generated {len(tokens)} tokens")
         
-        # 计算 token 边界
+        # Calculate token boundaries
         token_boundaries = []
         current_pos = 0
         
         for token_text in token_texts:
-            # 处理特殊字符
+            # Handle special characters
             if token_text.strip():
                 token_start = test_code.find(token_text, current_pos)
                 if token_start != -1:
@@ -117,56 +117,56 @@ for i in range(10):
                     token_boundaries.append((token_start, token_end))
                     current_pos = token_end
                 else:
-                    # 如果找不到，使用当前位置
+                    # If not found, use current position
                     token_boundaries.append((current_pos, current_pos + 1))
                     current_pos += 1
             else:
                 token_boundaries.append((current_pos, current_pos + 1))
                 current_pos += 1
         
-        print(f"✓ 计算 token 边界完成")
+        print(f"✓ Token boundary calculation completed")
         
-        # 计算对齐分数
+        # Calculate alignment score
         aligned_rules = 0
-        tolerance = 1  # 允许1字符的误差
+        tolerance = 1  # Allow 1 character error margin
         
         for rule in rules:
             rule_start = rule['start_byte']
             rule_end = rule['end_byte']
             
-            # 检查起始位置对齐
+            # Check start position alignment
             start_aligned = any(abs(rule_start - tb[0]) <= tolerance for tb in token_boundaries)
-            # 检查结束位置对齐
+            # Check end position alignment
             end_aligned = any(abs(rule_end - tb[1]) <= tolerance for tb in token_boundaries)
             
             if start_aligned and end_aligned:
                 aligned_rules += 1
         
-        # 计算最终分数
+        # Calculate final score
         alignment_score = (aligned_rules / len(rules) * 100) if rules else 0
         
         print("\n" + "=" * 40)
-        print("测试结果")
+        print("Test Results")
         print("=" * 40)
         print(f"Rule-level Alignment Score: {alignment_score:.2f}%")
-        print(f"总语法规则数: {len(rules)}")
-        print(f"对齐规则数: {aligned_rules}")
-        print(f"Token 总数: {len(tokens)}")
-        print(f"Token 边界数: {len(token_boundaries)}")
+        print(f"Total syntax rules: {len(rules)}")
+        print(f"Aligned rules: {aligned_rules}")
+        print(f"Total tokens: {len(tokens)}")
+        print(f"Token boundaries: {len(token_boundaries)}")
         
-        # 显示规则类型统计
+        # Display rule type statistics
         rule_types = {}
         for rule in rules:
             rule_type = rule['type']
             rule_types[rule_type] = rule_types.get(rule_type, 0) + 1
         
-        print(f"\n语法规则类型统计 (前10种):")
+        print(f"\nSyntax rule type statistics (top 10):")
         sorted_rules = sorted(rule_types.items(), key=lambda x: x[1], reverse=True)[:10]
         for i, (rule_type, count) in enumerate(sorted_rules, 1):
             print(f"  {i:2d}. {rule_type}: {count}")
         
-        # 显示一些示例规则
-        print(f"\n示例语法规则 (前5个):")
+        # Display some example rules
+        print(f"\nExample syntax rules (first 5):")
         for i, rule in enumerate(rules[:5], 1):
             text_preview = rule['text'].replace('\n', '\\n')
             print(f"  {i}. {rule['type']}: '{text_preview}'")
@@ -174,25 +174,25 @@ for i in range(10):
         return True
         
     except Exception as e:
-        print(f"❌ 测试过程中出现错误: {e}")
+        print(f"❌ Error during testing: {e}")
         import traceback
         traceback.print_exc()
         return False
 
 def test_code_samples():
-    """测试 code_samples 目录中的文件"""
+    """Test files in the code_samples directory"""
     print("\n" + "=" * 60)
-    print("测试代码样本目录")
+    print("Testing Code Samples Directory")
     print("=" * 60)
     
     code_samples_dir = Path('./code_samples')
     if not code_samples_dir.exists():
-        print("❌ code_samples 目录不存在")
+        print("❌ code_samples directory does not exist")
         return False
     
-    print("✓ code_samples 目录存在")
+    print("✓ code_samples directory exists")
     
-    # 检查各语言的样本文件目录
+    # Check sample file directories for each language
     expected_dirs = {
         'python': 'python',
         'javascript': 'javascript', 
@@ -213,55 +213,55 @@ def test_code_samples():
     for lang, dirname in expected_dirs.items():
         dir_path = code_samples_dir / dirname
         if dir_path.exists() and dir_path.is_dir():
-            # 统计目录中的文件
+            # Count files in directory
             files = list(dir_path.glob('*'))
             file_count = len([f for f in files if f.is_file()])
             if file_count > 0:
-                print(f"✓ {dirname}/ ({file_count} 个文件)")
+                print(f"✓ {dirname}/ ({file_count} files)")
                 found_files += 1
                 total_files += file_count
             else:
-                print(f"⚠️  {dirname}/ (目录为空)")
+                print(f"⚠️  {dirname}/ (directory is empty)")
         else:
-            print(f"❌ {dirname}/ 目录不存在")
+            print(f"❌ {dirname}/ directory does not exist")
     
-    print(f"\n找到 {found_files}/{len(expected_dirs)} 个语言目录，共 {total_files} 个样本文件")
+    print(f"\nFound {found_files}/{len(expected_dirs)} language directories, {total_files} sample files in total")
     return found_files > 0
 
 def main():
-    """主测试函数"""
-    print("Quick Analyzer 简化测试")
-    print("测试 Tree-sitter rule-level alignment score 计算功能")
+    """Main test function"""
+    print("Quick Analyzer Simplified Test")
+    print("Testing Tree-sitter rule-level alignment score calculation functionality")
     
-    # 测试核心功能
+    # Test core functionality
     core_test_passed = test_quick_analyzer_functionality()
     
-    # 测试代码样本
+    # Test code samples
     samples_test_passed = test_code_samples()
     
     print("\n" + "=" * 60)
-    print("测试总结")
+    print("Test Summary")
     print("=" * 60)
     
     if core_test_passed:
-        print("✓ 核心功能测试通过")
+        print("✓ Core functionality test passed")
     else:
-        print("❌ 核心功能测试失败")
+        print("❌ Core functionality test failed")
     
     if samples_test_passed:
-        print("✓ 代码样本测试通过")
+        print("✓ Code samples test passed")
     else:
-        print("❌ 代码样本测试失败")
+        print("❌ Code samples test failed")
     
     if core_test_passed and samples_test_passed:
-        print("\n🎉 所有测试通过！可以使用 quick_analyzer.py 进行完整分析")
-        print("\n建议运行命令:")
-        print("  python quick_analyzer.py")
+        print("\n🎉 All tests passed! You can use analyzer.py for complete analysis")
+        print("\nRecommended command:")
+        print("  python analyzer.py")
     else:
-        print("\n⚠️  部分测试失败，请检查环境配置")
+        print("\n⚠️  Some tests failed, please check your environment configuration")
         if not core_test_passed:
-            print("  - 请确保已安装所有依赖: pip install -r requirements.txt")
-            print("  - 请先运行 quick_analyzer.py 来编译语言库")
+            print("  - Make sure all dependencies are installed: pip install -r requirements.txt")
+            print("  - Run analyzer.py first to compile language libraries")
     
     return core_test_passed and samples_test_passed
 
