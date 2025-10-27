@@ -292,9 +292,14 @@ class QuickMultiLanguageAnalyzer:
             language_dir = base_path / language
             search_root = language_dir if language_dir.exists() else base_path
 
-            # Recursively gather files by extension
+            # Recursively gather files by extension from preferred root
             for ext in extensions:
                 code_files.extend(search_root.rglob(f"*{ext}"))
+
+            # Fallback: if language_dir exists but yielded no files, also scan base_path recursively
+            if not code_files and language_dir.exists():
+                for ext in extensions:
+                    code_files.extend(base_path.rglob(f"*{ext}"))
 
         if not code_files:
             print(f"No {language} files found under {base_path}")
