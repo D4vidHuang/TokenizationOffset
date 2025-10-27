@@ -17,6 +17,63 @@ from transformers import AutoTokenizer
 from tqdm import tqdm
 import warnings
 warnings.filterwarnings('ignore')
+import concurrent.futures
+import multiprocessing
+from typing import Any
+
+# Global worker analyzer for process pool
+WORKER_ANALYZER: Optional["QuickMultiLanguageAnalyzer"] = None
+
+def _worker_init(model_name: str, emit_utf16: bool):
+    global WORKER_ANALYZER
+    try:
+        WORKER_ANALYZER = QuickMultiLanguageAnalyzer(model_name=model_name, emit_utf16_offsets=emit_utf16)
+    except Exception:
+        WORKER_ANALYZER = None
+
+def _worker_analyze_file(args: Tuple[str, str]) -> Optional[Dict[str, Any]]:
+    """Top-level function for ProcessPoolExecutor to avoid pickling parser objects."""
+    global WORKER_ANALYZER
+    file_path_str, language = args
+    file_path = Path(file_path_str)
+    if WORKER_ANALYZER is None:
+        return None
+    try:
+        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+            code = f.read()
+        if not code.strip():
+            return None
+        code_size = len(code)
+        file_start_time = time.time()
+        score, details = WORKER_ANALYZER.calculate_rule_level_alignment(code, language)
+        file_analysis_time = time.time() - file_start_time
+        aligned_count = sum(1 for d in details.values() if d['fully_aligned'])
+        unaligned_rules_list = [
+            {
+                'rule_key': rk,
+                'type': rd.get('type'),
+                'start_byte': rd.get('start_byte'),
+                'end_byte': rd.get('end_byte'),
+                'start_aligned': rd.get('start_aligned'),
+                'end_aligned': rd.get('end_aligned'),
+                'fully_aligned': rd.get('fully_aligned'),
+                'text_preview': rd.get('text_preview')
+            }
+            for rk, rd in details.items() if not rd.get('fully_aligned')
+        ]
+        return {
+            'file': file_path.name,
+            'path': str(file_path),
+            'score': score,
+            'total_rules': len(details),
+            'aligned_rules': aligned_count,
+            'unaligned_rules': unaligned_rules_list,
+            'code_size': code_size,
+            'analysis_time': file_analysis_time,
+            'processing_speed': code_size / file_analysis_time if file_analysis_time > 0 else 0
+        }
+    except Exception:
+        return None
 
 class QuickMultiLanguageAnalyzer:
     """Quick Multilingual Analyzer - Using compiled libraries"""
@@ -262,7 +319,11 @@ class QuickMultiLanguageAnalyzer:
         alignment_score = (aligned_rules / len(rules) * 100) if rules else 0
         return alignment_score, rule_details
     
-    def analyze_language_files(self, code_dir: str, language: str, flush_every: int = 0, output_dir: str = "results/multilang") -> Dict:
+    def _analyze_single_file(self, args_tuple):
+        """Deprecated: replaced by top-level worker function for pickling safety."""
+        return _worker_analyze_file(args_tuple)
+
+    def analyze_language_files(self, code_dir: str, language: str, flush_every: int = 0, output_dir: str = "results/multilang", workers: int = 1) -> Dict:
         """Analyze all files for a specific language.
 
         Supports two layouts:
@@ -318,67 +379,25 @@ class QuickMultiLanguageAnalyzer:
         files_since_flush = 0
         chunk_start_time = time.time()
         
-        # Use tqdm to create progress bar
-        for file_path in tqdm(code_files, desc=f"Analyzing {language}", unit="files"):
-            try:
-                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                    code = f.read()
-                
-                if not code.strip():
+        # Parallel or serial processing of files
+        def process_collected(batch_results):
+            nonlocal file_results, total_rules, total_aligned, total_code_size, files_since_flush, chunk_idx, chunk_start_time
+            for res in batch_results:
+                if not res:
                     continue
-                
-                code_size = len(code)
-                total_code_size += code_size
-                
-                file_start_time = time.time()
-                score, details = self.calculate_rule_level_alignment(code, language)
-                file_analysis_time = time.time() - file_start_time
-                
-                aligned_count = sum(1 for d in details.values() if d['fully_aligned'])
-
-                # Only keep unaligned rules in report to reduce size
-                unaligned_rules_list = [
-                    {
-                        'rule_key': rk,
-                        'type': rd.get('type'),
-                        'start_byte': rd.get('start_byte'),
-                        'end_byte': rd.get('end_byte'),
-                        'start_aligned': rd.get('start_aligned'),
-                        'end_aligned': rd.get('end_aligned'),
-                        'fully_aligned': rd.get('fully_aligned'),
-                        'text_preview': rd.get('text_preview')
-                    }
-                    for rk, rd in details.items() if not rd.get('fully_aligned')
-                ]
-
-                file_results.append({
-                    'file': file_path.name,
-                    'path': str(file_path),
-                    'score': score,
-                    'total_rules': len(details),
-                    'aligned_rules': aligned_count,
-                    'unaligned_rules': unaligned_rules_list,
-                    'code_size': code_size,
-                    'analysis_time': file_analysis_time,
-                    'processing_speed': code_size / file_analysis_time if file_analysis_time > 0 else 0
-                })
-                
-                total_rules += len(details)
-                total_aligned += aligned_count
-                
+                file_results.append(res)
+                total_rules += res['total_rules']
+                total_aligned += res['aligned_rules']
+                total_code_size += res['code_size']
                 files_since_flush += 1
-
-                # Flush chunk to disk every flush_every files if configured
                 if flush_every and files_since_flush >= flush_every:
                     chunk_idx += 1
-                    # Build chunk result for this language
                     chunk_total_rules = sum(r['total_rules'] for r in file_results)
                     chunk_total_aligned = sum(r['aligned_rules'] for r in file_results)
                     chunk_total_size = sum(r['code_size'] for r in file_results)
                     chunk_total_time = time.time() - chunk_start_time
                     chunk_avg_score = sum(r['score'] for r in file_results) / len(file_results)
                     chunk_avg_speed = chunk_total_size / chunk_total_time if chunk_total_time > 0 else 0
-
                     language_chunk_result = {
                         'language': language,
                         'file_count': len(file_results),
@@ -391,17 +410,34 @@ class QuickMultiLanguageAnalyzer:
                         'avg_processing_speed': chunk_avg_speed,
                         'files': file_results
                     }
-
-                    # Save chunk as a detailed report with suffix
                     self._save_results({language: language_chunk_result}, [], output_dir, chunk_total_time, suffix=f"_{language}_part_{chunk_idx}")
-
-                    # Clear chunk memory and reset counters
                     file_results = []
                     files_since_flush = 0
                     chunk_start_time = time.time()
 
-            except Exception as e:
-                print(f"  {file_path.name:<20} Error: {e}")
+        if workers and workers > 1:
+            max_workers = workers if workers > 0 else (multiprocessing.cpu_count() or 1)
+            with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers, initializer=_worker_init, initargs=(self.model_name, self.emit_utf16_offsets)) as ex:
+                # map returns in order; use chunksize for throughput
+                batch_iter = ex.map(_worker_analyze_file, [(str(p), language) for p in code_files], chunksize=16)
+                # consume in minibatches for reduced overhead
+                buf = []
+                for res in tqdm(batch_iter, desc=f"Analyzing {language}", unit="files"):
+                    buf.append(res)
+                    if len(buf) >= 256:
+                        process_collected(buf)
+                        buf = []
+                if buf:
+                    process_collected(buf)
+        else:
+            results = []
+            for file_path in tqdm(code_files, desc=f"Analyzing {language}", unit="files"):
+                results.append(self._analyze_single_file((str(file_path), language)))
+                if len(results) >= 256:
+                    process_collected(results)
+                    results = []
+            if results:
+                process_collected(results)
         
         # Calculate total analysis time and speed
         total_time = time.time() - start_time
@@ -726,7 +762,8 @@ class QuickMultiLanguageAnalyzer:
     def run_analysis(self, code_dir: str = "code_samples", 
                     target_languages: List[str] = None, 
                     output_dir: str = "results/multilang",
-                    flush_every: int = 0) -> Dict:
+                    flush_every: int = 0,
+                    workers: int = 1) -> Dict:
         """Run analysis"""
         available_languages = self.get_available_languages()
         
@@ -750,7 +787,7 @@ class QuickMultiLanguageAnalyzer:
         
         results = {}
         for language in target_languages:
-            result = self.analyze_language_files(code_dir, language, flush_every=flush_every, output_dir=output_dir)
+            result = self.analyze_language_files(code_dir, language, flush_every=flush_every, output_dir=output_dir, workers=workers)
             if result:
                 results[language] = result
         
@@ -929,6 +966,7 @@ def main():
     parser.add_argument('--file_count', type=int, default=1000000, help='Number of files for estimation')
     parser.add_argument('--avg_file_size', type=float, default=0, help='Average file size for estimation (bytes)')
     parser.add_argument('--flush_every', type=int, default=5000, help='Write a detailed report every N files to reduce memory usage (0=disable)')
+    parser.add_argument('--workers', type=int, default=1, help='Number of worker processes for parallel analysis (1 = disable)')
 
     # HuggingFace dataset options
     parser.add_argument('--hf_dataset', type=str, help='HuggingFace dataset name (e.g., bigcode/the-stack)')
@@ -997,7 +1035,7 @@ def main():
                 else:
                     target_languages = ['python']  # Default to analyzing only Python
 
-                run_results = analyzer.run_analysis(args.code_dir, target_languages, args.output_dir, flush_every=args.flush_every)
+                run_results = analyzer.run_analysis(args.code_dir, target_languages, args.output_dir, flush_every=args.flush_every, workers=args.workers)
                 # Save simple per-language avg_score/overall_alignment for comparison
                 per_model_language_summary[mdl] = {
                     lang: {
