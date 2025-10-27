@@ -21,9 +21,10 @@ warnings.filterwarnings('ignore')
 class QuickMultiLanguageAnalyzer:
     """Quick Multilingual Analyzer - Using compiled libraries"""
     
-    def __init__(self, model_name: str = "gpt2"):
+    def __init__(self, model_name: str = "gpt2", emit_utf16_offsets: bool = False):
         self.model_name = model_name
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.emit_utf16_offsets = emit_utf16_offsets
         
         # Language configurations
         self.language_configs = {
@@ -143,28 +144,85 @@ class QuickMultiLanguageAnalyzer:
         
         rules = extract_rules(tree.root_node)
         
-        # Tokenization
-        try:
-            tokens = self.tokenizer.encode(code)
-            token_texts = [self.tokenizer.decode([token]) for token in tokens]
-        except Exception as e:
-            print(f"Tokenization error: {e}")
-            return 0.0, {}
-        
-        # Calculate token boundaries
+        # Tokenization with reliable offsets (prefer fast tokenizer offset_mapping)
         token_boundaries = []
-        current_pos = 0
+        code_bytes = code.encode('utf-8')
+        try:
+            encoding = self.tokenizer(
+                code,
+                add_special_tokens=False,
+                return_offsets_mapping=True
+            )
+            offsets = encoding.get('offset_mapping')
+            if offsets is None:
+                raise ValueError('offset_mapping not available')
+
+            # Build char->byte mapping once
+            char_to_byte = [0] * (len(code) + 1)
+            bpos = 0
+            for i, ch in enumerate(code):
+                blen = len(ch.encode('utf-8'))
+                char_to_byte[i] = bpos
+                bpos += blen
+            char_to_byte[len(code)] = len(code_bytes)
+
+            token_boundaries = [
+                (char_to_byte[s], char_to_byte[e])
+                for (s, e) in offsets if not (s == e == 0 and False)
+            ]
+        except Exception:
+            # Fallback: heuristic byte-search per token id (less reliable across tokenizers)
+            try:
+                tokens = self.tokenizer.encode(code, add_special_tokens=False)
+                token_texts = [self.tokenizer.decode([token], clean_up_tokenization_spaces=False) for token in tokens]
+            except Exception as e:
+                print(f"Tokenization error: {e}")
+                return 0.0, {}
+
+            token_boundaries = []
+            current_pos = 0
+            for token_text in token_texts:
+                token_bytes = token_text.encode('utf-8')
+                if token_bytes.strip():
+                    token_start = -1
+                    for i in range(current_pos, len(code_bytes) - len(token_bytes) + 1):
+                        if code_bytes[i:i+len(token_bytes)] == token_bytes:
+                            token_start = i
+                            break
+                    if token_start != -1:
+                        token_end = token_start + len(token_bytes)
+                        token_boundaries.append((token_start, token_end))
+                        current_pos = token_end
+                    else:
+                        token_boundaries.append((current_pos, min(current_pos + 1, len(code_bytes))))
+                        current_pos = min(current_pos + 1, len(code_bytes))
+                else:
+                    token_boundaries.append((current_pos, min(current_pos + 1, len(code_bytes))))
+                    current_pos = min(current_pos + 1, len(code_bytes))
         
-        for token_text in token_texts:
-            token_start = code.find(token_text, current_pos)
-            if token_start != -1:
-                token_end = token_start + len(token_text)
-                token_boundaries.append((token_start, token_end))
-                current_pos = token_end
-            else:
-                token_boundaries.append((current_pos, current_pos + 1))
-                current_pos += 1
-        
+        # Optionally build byte->UTF16 code unit index mapping (for emoji safety / external consumers)
+        byte_to_utf16_index = None
+        if self.emit_utf16_offsets:
+            try:
+                # Build mapping of byte positions to UTF-16 code unit indices
+                byte_to_utf16_index = [0] * (len(code_bytes) + 1)
+                byte_pos = 0
+                utf16_index = 0
+                for ch in code:
+                    encoded = ch.encode('utf-8')
+                    blen = len(encoded)
+                    # surrogate pair in UTF-16 if codepoint > 0xFFFF
+                    units = 2 if ord(ch) > 0xFFFF else 1
+                    # Fill mapping for interior bytes of this codepoint
+                    for i in range(blen):
+                        byte_to_utf16_index[byte_pos + i] = utf16_index
+                    # Boundary after this codepoint
+                    byte_to_utf16_index[byte_pos + blen] = utf16_index + units
+                    byte_pos += blen
+                    utf16_index += units
+            except Exception:
+                byte_to_utf16_index = None
+
         # Calculate alignment
         aligned_rules = 0
         rule_details = {}
@@ -181,36 +239,63 @@ class QuickMultiLanguageAnalyzer:
                 aligned_rules += 1
             
             rule_key = f"{rule['type']}_{rule['start_byte']}_{rule['end_byte']}"
-            rule_details[rule_key] = {
+            details_entry = {
                 'type': rule['type'],
+                'start_byte': rule['start_byte'],
+                'end_byte': rule['end_byte'],
                 'start_aligned': start_aligned,
                 'end_aligned': end_aligned,
                 'fully_aligned': fully_aligned,
                 'text_preview': rule['text'][:50]
             }
+            if byte_to_utf16_index is not None:
+                sb = rule['start_byte']
+                eb = rule['end_byte']
+                if 0 <= sb < len(byte_to_utf16_index):
+                    details_entry['start_utf16'] = byte_to_utf16_index[sb]
+                if 0 <= eb <= len(byte_to_utf16_index):
+                    details_entry['end_utf16'] = byte_to_utf16_index[eb]
+            rule_details[rule_key] = details_entry
         
         alignment_score = (aligned_rules / len(rules) * 100) if rules else 0
         return alignment_score, rule_details
     
-    def analyze_language_files(self, code_dir: str, language: str) -> Dict:
-        """Analyze all files for a specific language"""
+    def analyze_language_files(self, code_dir: str, language: str, flush_every: int = 0, output_dir: str = "results/multilang") -> Dict:
+        """Analyze all files for a specific language.
+
+        Supports two layouts:
+        1) code_dir/<language> containing files (legacy)
+        2) A flat or nested directory tree at code_dir where we recursively
+           collect files by extension for the specified language.
+        Also supports passing a single file path in code_dir.
+        """
         if language not in self.parsers:
             print(f"Skipping unsupported language: {language}")
             return {}
-        
-        language_dir = Path(code_dir) / language
-        if not language_dir.exists():
-            print(f"Language directory does not exist: {language_dir}")
-            return {}
-        
-        # Find files
+
+        base_path = Path(code_dir)
         extensions = self.language_configs[language]['extensions']
+
         code_files = []
-        for ext in extensions:
-            code_files.extend(language_dir.glob(f"*{ext}"))
-        
+
+        # If a single file path is passed, check and use it directly
+        if base_path.is_file():
+            if any(str(base_path).endswith(ext) for ext in extensions):
+                code_files = [base_path]
+            else:
+                print(f"Provided file does not match {language} extensions: {base_path}")
+                return {}
+        else:
+            # Prefer legacy layout if present: code_dir/<language>
+            language_dir = base_path / language
+            search_root = language_dir if language_dir.exists() else base_path
+
+            # Recursively gather files by extension
+            for ext in extensions:
+                code_files.extend(search_root.rglob(f"*{ext}"))
+
         if not code_files:
-            print(f"No {language} files found")
+            print(f"No {language} files found under {base_path}")
             return {}
         
         print(f"\nAnalyzing {language.upper()} ({len(code_files)} files)")
@@ -222,6 +307,9 @@ class QuickMultiLanguageAnalyzer:
         total_aligned = 0
         total_code_size = 0
         start_time = time.time()
+        chunk_idx = 0
+        files_since_flush = 0
+        chunk_start_time = time.time()
         
         # Use tqdm to create progress bar
         for file_path in tqdm(code_files, desc=f"Analyzing {language}", unit="files"):
@@ -240,12 +328,29 @@ class QuickMultiLanguageAnalyzer:
                 file_analysis_time = time.time() - file_start_time
                 
                 aligned_count = sum(1 for d in details.values() if d['fully_aligned'])
-                
+
+                # Only keep unaligned rules in report to reduce size
+                unaligned_rules_list = [
+                    {
+                        'rule_key': rk,
+                        'type': rd.get('type'),
+                        'start_byte': rd.get('start_byte'),
+                        'end_byte': rd.get('end_byte'),
+                        'start_aligned': rd.get('start_aligned'),
+                        'end_aligned': rd.get('end_aligned'),
+                        'fully_aligned': rd.get('fully_aligned'),
+                        'text_preview': rd.get('text_preview')
+                    }
+                    for rk, rd in details.items() if not rd.get('fully_aligned')
+                ]
+
                 file_results.append({
                     'file': file_path.name,
+                    'path': str(file_path),
                     'score': score,
                     'total_rules': len(details),
                     'aligned_rules': aligned_count,
+                    'unaligned_rules': unaligned_rules_list,
                     'code_size': code_size,
                     'analysis_time': file_analysis_time,
                     'processing_speed': code_size / file_analysis_time if file_analysis_time > 0 else 0
@@ -254,6 +359,40 @@ class QuickMultiLanguageAnalyzer:
                 total_rules += len(details)
                 total_aligned += aligned_count
                 
+                files_since_flush += 1
+
+                # Flush chunk to disk every flush_every files if configured
+                if flush_every and files_since_flush >= flush_every:
+                    chunk_idx += 1
+                    # Build chunk result for this language
+                    chunk_total_rules = sum(r['total_rules'] for r in file_results)
+                    chunk_total_aligned = sum(r['aligned_rules'] for r in file_results)
+                    chunk_total_size = sum(r['code_size'] for r in file_results)
+                    chunk_total_time = time.time() - chunk_start_time
+                    chunk_avg_score = sum(r['score'] for r in file_results) / len(file_results)
+                    chunk_avg_speed = chunk_total_size / chunk_total_time if chunk_total_time > 0 else 0
+
+                    language_chunk_result = {
+                        'language': language,
+                        'file_count': len(file_results),
+                        'avg_score': chunk_avg_score,
+                        'total_rules': chunk_total_rules,
+                        'total_aligned': chunk_total_aligned,
+                        'overall_alignment': (chunk_total_aligned / chunk_total_rules * 100) if chunk_total_rules > 0 else 0,
+                        'total_code_size': chunk_total_size,
+                        'total_analysis_time': chunk_total_time,
+                        'avg_processing_speed': chunk_avg_speed,
+                        'files': file_results
+                    }
+
+                    # Save chunk as a detailed report with suffix
+                    self._save_results({language: language_chunk_result}, [], output_dir, chunk_total_time, suffix=f"_{language}_part_{chunk_idx}")
+
+                    # Clear chunk memory and reset counters
+                    file_results = []
+                    files_since_flush = 0
+                    chunk_start_time = time.time()
+
             except Exception as e:
                 print(f"  {file_path.name:<20} Error: {e}")
         
@@ -264,8 +403,9 @@ class QuickMultiLanguageAnalyzer:
         if not file_results:
             return {}
         
+        # If there are remaining unflushed files, they will be included in final stats and report
         # Calculate statistics
-        avg_score = sum(r['score'] for r in file_results) / len(file_results)
+        avg_score = (sum(r['score'] for r in file_results) / len(file_results)) if file_results else 0.0
         overall_alignment = (total_aligned / total_rules * 100) if total_rules > 0 else 0
         
         result = {
@@ -291,6 +431,31 @@ class QuickMultiLanguageAnalyzer:
         print(f"  Total analysis time: {result['total_analysis_time']:.2f} seconds")
         print(f"  Average processing speed: {result['avg_processing_speed']/1024:.2f} KB/sec")
         
+        # If any remaining unflushed files and flush_every was set, save a final chunk for remainder
+        if flush_every and file_results:
+            chunk_idx += 1
+            chunk_total_rules = sum(r['total_rules'] for r in file_results)
+            chunk_total_aligned = sum(r['aligned_rules'] for r in file_results)
+            chunk_total_size = sum(r['code_size'] for r in file_results)
+            chunk_total_time = time.time() - chunk_start_time
+            chunk_avg_score = sum(r['score'] for r in file_results) / len(file_results)
+            chunk_avg_speed = chunk_total_size / chunk_total_time if chunk_total_time > 0 else 0
+
+            language_chunk_result = {
+                'language': language,
+                'file_count': len(file_results),
+                'avg_score': chunk_avg_score,
+                'total_rules': chunk_total_rules,
+                'total_aligned': chunk_total_aligned,
+                'overall_alignment': (chunk_total_aligned / chunk_total_rules * 100) if chunk_total_rules > 0 else 0,
+                'total_code_size': chunk_total_size,
+                'total_analysis_time': chunk_total_time,
+                'avg_processing_speed': chunk_avg_speed,
+                'files': file_results
+            }
+
+            self._save_results({language: language_chunk_result}, [], output_dir, chunk_total_time, suffix=f"_{language}_part_{chunk_idx}")
+
         return result
 
     def analyze_hf_dataset(
@@ -304,7 +469,8 @@ class QuickMultiLanguageAnalyzer:
         limit: Optional[int] = None,
         streaming: bool = True,
         use_auth_token: Optional[str] = None,
-        output_dir: str = "results/multilang"
+        output_dir: str = "results/multilang",
+        flush_every: int = 0
     ) -> Dict:
         """Analyze code samples from a HuggingFace dataset.
 
@@ -378,6 +544,10 @@ class QuickMultiLanguageAnalyzer:
                     'avg_processing_speed': 0.0,  # will compute later
                     'files': []
                 }
+        # Per-language chunking helpers
+        lang_chunk_index: Dict[str, int] = {}
+        lang_files_since_flush: Dict[str, int] = {}
+        lang_chunk_start_time: Dict[str, float] = {}
 
         processed = 0
         overall_start_time = time.time()
@@ -410,11 +580,27 @@ class QuickMultiLanguageAnalyzer:
 
                 aligned_count = sum(1 for d in details.values() if d['fully_aligned'])
 
+                # Only keep unaligned rules for dataset path as well
+                rules_list = [
+                    {
+                        'rule_key': rk,
+                        'type': rd.get('type'),
+                        'start_byte': rd.get('start_byte'),
+                        'end_byte': rd.get('end_byte'),
+                        'start_aligned': rd.get('start_aligned'),
+                        'end_aligned': rd.get('end_aligned'),
+                        'fully_aligned': rd.get('fully_aligned'),
+                        'text_preview': rd.get('text_preview')
+                    }
+                    for rk, rd in details.items() if not rd.get('fully_aligned')
+                ]
+
                 per_language_stats[language]['files'].append({
                     'file': example.get('id', f'sample_{i}'),
                     'score': score,
                     'total_rules': len(details),
                     'aligned_rules': aligned_count,
+                    'unaligned_rules': rules_list,
                     'code_size': code_size,
                     'analysis_time': sample_time,
                     'processing_speed': code_size / sample_time if sample_time > 0 else 0
@@ -427,6 +613,45 @@ class QuickMultiLanguageAnalyzer:
                 per_language_stats[language]['total_analysis_time'] += sample_time
 
                 processed += 1
+
+                # Initialize chunk timers/counters
+                if language not in lang_chunk_index:
+                    lang_chunk_index[language] = 0
+                    lang_files_since_flush[language] = 0
+                    lang_chunk_start_time[language] = time.time()
+
+                lang_files_since_flush[language] += 1
+
+                # Flush per language if configured
+                if flush_every and lang_files_since_flush[language] >= flush_every:
+                    lang_chunk_index[language] += 1
+                    files = per_language_stats[language]['files']
+                    chunk_total_rules = sum(r['total_rules'] for r in files)
+                    chunk_total_aligned = sum(r['aligned_rules'] for r in files)
+                    chunk_total_size = sum(r['code_size'] for r in files)
+                    chunk_total_time = time.time() - lang_chunk_start_time[language]
+                    chunk_avg_score = (sum(r['score'] for r in files) / len(files)) if files else 0.0
+                    chunk_avg_speed = chunk_total_size / chunk_total_time if chunk_total_time > 0 else 0
+
+                    language_chunk_result = {
+                        'language': language,
+                        'file_count': len(files),
+                        'avg_score': chunk_avg_score,
+                        'total_rules': chunk_total_rules,
+                        'total_aligned': chunk_total_aligned,
+                        'overall_alignment': (chunk_total_aligned / chunk_total_rules * 100) if chunk_total_rules > 0 else 0,
+                        'total_code_size': chunk_total_size,
+                        'total_analysis_time': chunk_total_time,
+                        'avg_processing_speed': chunk_avg_speed,
+                        'files': files
+                    }
+
+                    self._save_results({language: language_chunk_result}, [], output_dir, chunk_total_time, suffix=f"_{language}_part_{lang_chunk_index[language]}")
+
+                    # Reset per-language buffers
+                    per_language_stats[language]['files'] = []
+                    lang_files_since_flush[language] = 0
+                    lang_chunk_start_time[language] = time.time()
         finally:
             # tqdm will close itself when pbar goes out of scope
             pass
@@ -487,13 +712,14 @@ class QuickMultiLanguageAnalyzer:
                 print(f"{i:2d}. {lang:<12} {result['avg_processing_speed']/1024:.2f} KB/sec "
                       f"(Total size: {result['total_code_size']/1024:.2f} KB)")
 
-        # Save results
+        # Save results (only detailed report)
         self._save_results(results, rankings, output_dir, overall_time)
         return results
     
     def run_analysis(self, code_dir: str = "code_samples", 
                     target_languages: List[str] = None, 
-                    output_dir: str = "results/multilang") -> Dict:
+                    output_dir: str = "results/multilang",
+                    flush_every: int = 0) -> Dict:
         """Run analysis"""
         available_languages = self.get_available_languages()
         
@@ -517,7 +743,7 @@ class QuickMultiLanguageAnalyzer:
         
         results = {}
         for language in target_languages:
-            result = self.analyze_language_files(code_dir, language)
+            result = self.analyze_language_files(code_dir, language, flush_every=flush_every, output_dir=output_dir)
             if result:
                 results[language] = result
         
@@ -549,13 +775,16 @@ class QuickMultiLanguageAnalyzer:
                 print(f"{i:2d}. {lang:<12} {result['avg_processing_speed']/1024:.2f} KB/sec "
                       f"(Total size: {result['total_code_size']/1024:.2f} KB)")
         
-        # Save results to files
+        # Save results to files (only detailed report)
         self._save_results(results, rankings, output_dir, overall_analysis_time)
         
         return results
     
-    def _save_results(self, results: Dict, rankings: List, output_dir: str, overall_analysis_time: float):
-        """Save analysis results to files"""
+    def _save_results(self, results: Dict, rankings: List, output_dir: str, overall_analysis_time: float, suffix: str = ""):
+        """Save analysis results to files. Only writes detailed_analysis JSON.
+
+        suffix: optional string to append to the detailed filename, e.g. "_python_part_1".
+        """
         output_path = Path(output_dir)
         output_path.mkdir(parents=True, exist_ok=True)
         
@@ -573,77 +802,16 @@ class QuickMultiLanguageAnalyzer:
                 'avg_processing_speed': sum(r['total_code_size'] for r in results.values()) / overall_analysis_time if overall_analysis_time > 0 else 0
             },
             'languages': results,
-            'rankings': [
-                {
-                    'rank': i + 1,
-                    'language': lang,
-                    'avg_score': result['avg_score'],
-                    'file_count': result['file_count'],
-                    'total_rules': result['total_rules'],
-                    'total_aligned': result['total_aligned']
-                }
-                for i, (lang, result) in enumerate(rankings)
-            ]
+            'rankings': []  # rankings omitted by request
         }
         
         # Save detailed report
-        detailed_file = output_path / f"detailed_analysis_{self.model_name}.json"
+        detailed_file = output_path / f"detailed_analysis_{self.model_name}{suffix}.json"
         with open(detailed_file, 'w', encoding='utf-8') as f:
             json.dump(detailed_results, f, ensure_ascii=False, indent=2)
         
-        # Save simplified ranking report
-        ranking_report = {
-            'model': self.model_name,
-            'analysis_date': str(Path().resolve()),
-            'rankings': detailed_results['rankings'],
-            'summary': detailed_results['summary']
-        }
-        
-        ranking_file = output_path / f"language_rankings_{self.model_name}.json"
-        with open(ranking_file, 'w', encoding='utf-8') as f:
-            json.dump(ranking_report, f, ensure_ascii=False, indent=2)
-        
-        # Generate cross-language report (for visualization tool)
-        cross_language_report = {
-            "model": self.model_name,
-            "analysis_date": str(output_path),
-            "language_rankings": [
-                {
-                    "language": lang,
-                    "avg_score": result["avg_score"],
-                    "total_rules": result["total_rules"],
-                    "aligned_rules": result["total_aligned"],
-                    "alignment_rate": (result["total_aligned"] / result["total_rules"] * 100) if result["total_rules"] > 0 else 0
-                }
-                for lang, result in rankings
-            ],
-            "analysis_summary": {
-                "analyzed_languages": len(rankings),
-                "total_files": sum(result["file_count"] for _, result in rankings),
-                "total_rules": sum(result["total_rules"] for _, result in rankings),
-                "total_aligned_rules": sum(result["total_aligned"] for _, result in rankings),
-                "average_score": sum(result["avg_score"] for _, result in rankings) / len(rankings) if rankings else 0,
-                "overall_alignment_rate": (sum(result["total_aligned"] for _, result in rankings) / sum(result["total_rules"] for _, result in rankings) * 100) if sum(result["total_rules"] for _, result in rankings) > 0 else 0
-            }
-        }
-        
-        cross_lang_file = output_path / f"cross_language_report_{self.model_name}.json"
-        with open(cross_lang_file, 'w', encoding='utf-8') as f:
-            json.dump(cross_language_report, f, ensure_ascii=False, indent=2)
-        
-        # Save separate detailed reports for each language
-        for language, result in results.items():
-            lang_dir = output_path / language
-            lang_dir.mkdir(exist_ok=True)
-            
-            lang_file = lang_dir / f"analysis_report_{self.model_name}.json"
-            with open(lang_file, 'w', encoding='utf-8') as f:
-                json.dump(result, f, ensure_ascii=False, indent=2)
-        
         print(f"\n📁 Analysis results saved to:")
         print(f"  - Detailed report: {detailed_file}")
-        print(f"  - Ranking report: {ranking_file}")
-        print(f"  - Language reports: {output_path}/{{language}}/analysis_report_{self.model_name}.json")
 
 def estimate_processing_time(analyzer, language, avg_file_size, file_count):
     """Estimate time required to process a large number of files"""
@@ -747,10 +915,13 @@ def main():
     parser.add_argument('--code_dir', default='code_samples', help='Code directory')
     parser.add_argument('--output_dir', default='results/multilang', help='Output directory')
     parser.add_argument('--model', default='gpt2', help='Tokenizer model')
+    parser.add_argument('--models', nargs='+', help='Analyze with multiple tokenizer models (space-separated)')
     parser.add_argument('--no_progress_bar', action='store_true', help='Do not display progress bar')
+    parser.add_argument('--emit_utf16', action='store_true', help='Emit UTF-16 code unit offsets alongside byte offsets for rules')
     parser.add_argument('--estimate', action='store_true', help='Estimate large-scale processing time')
     parser.add_argument('--file_count', type=int, default=1000000, help='Number of files for estimation')
     parser.add_argument('--avg_file_size', type=float, default=0, help='Average file size for estimation (bytes)')
+    parser.add_argument('--flush_every', type=int, default=5000, help='Write a detailed report every N files to reduce memory usage (0=disable)')
 
     # HuggingFace dataset options
     parser.add_argument('--hf_dataset', type=str, help='HuggingFace dataset name (e.g., bigcode/the-stack)')
@@ -772,36 +943,107 @@ def main():
         import builtins
         builtins.tqdm = lambda x, **kwargs: x
     
-    analyzer = QuickMultiLanguageAnalyzer(model_name=args.model)
-    
+    # If estimation mode, only run once (use --model)
     if args.estimate:
+        analyzer = QuickMultiLanguageAnalyzer(model_name=args.model, emit_utf16_offsets=args.emit_utf16)
         # If estimation mode, only run estimation function
         language = args.language if args.language else 'python'
         estimate_processing_time(analyzer, language, args.avg_file_size, args.file_count)
     else:
         # Normal analysis mode
-        if args.hf_dataset:
-            analyzer.analyze_hf_dataset(
-                dataset_name=args.hf_dataset,
-                split=args.hf_split,
-                text_column=args.hf_text_column,
-                dataset_config=args.hf_config,
-                fixed_language=args.hf_language,
-                language_field=args.hf_language_field,
-                limit=args.hf_limit,
-                streaming=args.hf_streaming,
-                use_auth_token=args.hf_token,
-                output_dir=args.output_dir,
-            )
-        else:
-            if args.language:
-                target_languages = [args.language]
-            elif args.all_languages:
-                target_languages = None  # Analyze all available languages
-            else:
-                target_languages = ['python']  # Default to analyzing only Python
+        # Determine tokenizer models to run
+        models_to_run = args.models if args.models and len(args.models) > 0 else [ args.model ]
 
-            analyzer.run_analysis(args.code_dir, target_languages, args.output_dir)
+        multi_model_index = {
+            'models': models_to_run,
+            'runs': []
+        }
+        # Track per-model, per-language summary for comparison
+        per_model_language_summary = {}
+
+        for mdl in models_to_run:
+            print(f"\n{'='*80}")
+            print(f"Running analysis with tokenizer model: {mdl}")
+            print(f"{'='*80}")
+
+            analyzer = QuickMultiLanguageAnalyzer(model_name=mdl, emit_utf16_offsets=args.emit_utf16)
+
+            if args.hf_dataset:
+                _ = analyzer.analyze_hf_dataset(
+                    dataset_name=args.hf_dataset,
+                    split=args.hf_split,
+                    text_column=args.hf_text_column,
+                    dataset_config=args.hf_config,
+                    fixed_language=args.hf_language,
+                    language_field=args.hf_language_field,
+                    limit=args.hf_limit,
+                    streaming=args.hf_streaming,
+                    use_auth_token=args.hf_token,
+                    output_dir=args.output_dir,
+                    flush_every=args.flush_every,
+                )
+            else:
+                if args.language:
+                    target_languages = [args.language]
+                elif args.all_languages:
+                    target_languages = None  # Analyze all available languages
+                else:
+                    target_languages = ['python']  # Default to analyzing only Python
+
+                run_results = analyzer.run_analysis(args.code_dir, target_languages, args.output_dir, flush_every=args.flush_every)
+                # Save simple per-language avg_score/overall_alignment for comparison
+                per_model_language_summary[mdl] = {
+                    lang: {
+                        'avg_score': data.get('avg_score', 0.0),
+                        'overall_alignment': data.get('overall_alignment', 0.0),
+                        'file_count': data.get('file_count', 0)
+                    }
+                    for lang, data in run_results.items()
+                }
+
+            # Record per-model output file paths for convenience
+            multi_model_index['runs'].append({
+                'model': mdl,
+                'detailed_report': str(Path(args.output_dir) / f"detailed_analysis_{mdl}.json")
+            })
+
+        # Save a small multi-model index file for downstream tools
+        try:
+            out_dir = Path(args.output_dir)
+            out_dir.mkdir(parents=True, exist_ok=True)
+            index_file = out_dir / 'multi_model_summary.json'
+            with open(index_file, 'w', encoding='utf-8') as f:
+                json.dump(multi_model_index, f, ensure_ascii=False, indent=2)
+            print(f"\n🧭 Multi-model summary index saved to: {index_file}")
+        except Exception as e:
+            print(f"Failed to write multi-model summary index: {e}")
+
+        # Additionally, write a cross-model alignment comparison per language (if local files path used)
+        if per_model_language_summary:
+            try:
+                # Build a language-centric view
+                languages = set()
+                for model_summary in per_model_language_summary.values():
+                    languages.update(model_summary.keys())
+
+                comparison = {
+                    'languages': sorted(list(languages)),
+                    'models': models_to_run,
+                    'data': {
+                        lang: {
+                            mdl: per_model_language_summary.get(mdl, {}).get(lang, {})
+                            for mdl in models_to_run
+                        }
+                        for lang in languages
+                    }
+                }
+
+                cmp_file = Path(args.output_dir) / 'model_alignment_comparison.json'
+                with open(cmp_file, 'w', encoding='utf-8') as f:
+                    json.dump(comparison, f, ensure_ascii=False, indent=2)
+                print(f"Alignment comparison across models saved to: {cmp_file}")
+            except Exception as e:
+                print(f"Failed to write model alignment comparison: {e}")
 
 if __name__ == "__main__":
     main()

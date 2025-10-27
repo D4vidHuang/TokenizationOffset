@@ -22,6 +22,8 @@ Thumbs.db
 datasets/
 extracted*/
 results/
+code_samples/
+newRES/
 
 build/
 
