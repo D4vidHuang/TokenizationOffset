@@ -70,7 +70,9 @@ class QuickMultiLanguageAnalyzer:
 
     def _setup_parsers(self):
         """Set up parsers - Using existing compiled libraries"""
-        build_dir = Path('./build')
+        # Resolve build directory relative to this script's directory for robustness
+        script_dir = Path(__file__).resolve().parent
+        build_dir = script_dir / 'build'
         
         if not build_dir.exists():
             print("Error: build directory does not exist")
