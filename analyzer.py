@@ -346,7 +346,7 @@ class QuickMultiLanguageAnalyzer:
         """Deprecated: replaced by top-level worker function for pickling safety."""
         return _worker_analyze_file(args_tuple)
 
-    def analyze_language_files(self, code_dir: str, language: str, flush_every: int = 0, output_dir: str = "results/multilang", workers: int = 1, per_file_timeout: int = 10) -> Dict:
+    def analyze_language_files(self, code_dir: str, language: str, flush_every: int = 0, output_dir: str = "results/multilang", workers: int = 1, per_file_timeout: int = 10, max_files: Optional[int] = None, batch_size: int = 0) -> Dict:
         """Analyze all files for a specific language.
 
         Supports two layouts:
@@ -389,10 +389,152 @@ class QuickMultiLanguageAnalyzer:
             print(f"No {language} files found under {base_path}")
             return {}
         
+        # If max_files specified, limit the total number of files to analyze
+        if max_files is not None and max_files > 0:
+            code_files = code_files[:max_files]
+
         print(f"\nAnalyzing {language.upper()} ({len(code_files)} files)")
         print("-" * 50)
         
-        # Analyze files
+        # If batch_size specified (>0), process in fixed-size batches (saving after each batch)
+        if batch_size and batch_size > 0:
+            total_results: Dict = {
+                'language': language,
+                'file_count': 0,
+                'avg_score': 0.0,
+                'total_rules': 0,
+                'total_aligned': 0,
+                'overall_alignment': 0.0,
+                'total_code_size': 0,
+                'total_analysis_time': 0.0,
+                'avg_processing_speed': 0.0,
+                'files': []
+            }
+            overall_start = time.time()
+            part_idx = 0
+
+            for start in range(0, len(code_files), batch_size):
+                batch = code_files[start:start+batch_size]
+                part_idx += 1
+
+                # Reuse the core processing path but scoped to this batch
+                file_results = []
+                total_rules = 0
+                total_aligned = 0
+                total_code_size = 0
+                batch_start_time = time.time()
+
+                def process_collected_batch(batch_results):
+                    nonlocal file_results, total_rules, total_aligned, total_code_size
+                    for res in batch_results:
+                        if not res:
+                            continue
+                        file_results.append(res)
+                        total_rules += res['total_rules']
+                        total_aligned += res['aligned_rules']
+                        total_code_size += res['code_size']
+
+                if workers and workers > 1:
+                    max_workers = workers if workers > 0 else (multiprocessing.cpu_count() or 1)
+                    mp_ctx = multiprocessing.get_context('spawn')
+                    with concurrent.futures.ProcessPoolExecutor(
+                        max_workers=max_workers,
+                        mp_context=mp_ctx,
+                        initializer=_worker_init,
+                        initargs=(self.model_name, self.emit_utf16_offsets, language)
+                    ) as ex:
+                        os.environ['ANALYZER_PER_FILE_TIMEOUT'] = str(max(1, int(per_file_timeout)))
+                        batch_iter = ex.map(_worker_analyze_file, ((str(p), language) for p in batch), chunksize=64)
+                        buf = []
+                        for res in tqdm(batch_iter, desc=f"Analyzing {language}", unit="files"):
+                            buf.append(res)
+                            if len(buf) >= 256:
+                                process_collected_batch(buf)
+                                buf = []
+                        if buf:
+                            process_collected_batch(buf)
+                else:
+                    results_local = []
+                    for file_path in tqdm(batch, desc=f"Analyzing {language}", unit="files"):
+                        # serial process single file
+                        try:
+                            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                                code = f.read()
+                            if not code.strip():
+                                continue
+                            code_size = len(code)
+                            file_start_time = time.time()
+                            score, details = self.calculate_rule_level_alignment(code, language)
+                            file_analysis_time = time.time() - file_start_time
+                            aligned_count = sum(1 for d in details.values() if d['fully_aligned'])
+                            unaligned_rules_list = [
+                                {
+                                    'rule_key': rk,
+                                    'type': rd.get('type'),
+                                    'start_byte': rd.get('start_byte'),
+                                    'end_byte': rd.get('end_byte'),
+                                    'start_aligned': rd.get('start_aligned'),
+                                    'end_aligned': rd.get('end_aligned'),
+                                    'fully_aligned': rd.get('fully_aligned'),
+                                    'text_preview': rd.get('text_preview')
+                                }
+                                for rk, rd in details.items() if not rd.get('fully_aligned')
+                            ]
+                            results_local.append({
+                                'file': file_path.name,
+                                'path': str(file_path),
+                                'score': score,
+                                'total_rules': len(details),
+                                'aligned_rules': aligned_count,
+                                'unaligned_rules': unaligned_rules_list,
+                                'code_size': code_size,
+                                'analysis_time': file_analysis_time,
+                                'processing_speed': code_size / file_analysis_time if file_analysis_time > 0 else 0
+                            })
+                        except Exception:
+                            pass
+                    process_collected_batch(results_local)
+
+                # finalize batch stats and save
+                batch_time = time.time() - batch_start_time
+                avg_score = (sum(r['score'] for r in file_results) / len(file_results)) if file_results else 0.0
+                overall_alignment = (total_aligned / total_rules * 100) if total_rules > 0 else 0
+                avg_speed = total_code_size / batch_time if batch_time > 0 else 0
+
+                language_chunk_result = {
+                    'language': language,
+                    'file_count': len(file_results),
+                    'avg_score': avg_score,
+                    'total_rules': total_rules,
+                    'total_aligned': total_aligned,
+                    'overall_alignment': overall_alignment,
+                    'total_code_size': total_code_size,
+                    'total_analysis_time': batch_time,
+                    'avg_processing_speed': avg_speed,
+                    'files': file_results
+                }
+                self._save_results({language: language_chunk_result}, [], output_dir, batch_time, suffix=f"_{language}_part_{part_idx}")
+
+                # accumulate into overall totals
+                total_results['file_count'] += language_chunk_result['file_count']
+                total_results['total_rules'] += language_chunk_result['total_rules']
+                total_results['total_aligned'] += language_chunk_result['total_aligned']
+                total_results['total_code_size'] += language_chunk_result['total_code_size']
+                total_results['total_analysis_time'] += language_chunk_result['total_analysis_time']
+                total_results['files'].extend(file_results)
+
+                # stop early if reached limited max_files
+                if max_files is not None and total_results['file_count'] >= max_files:
+                    break
+
+            # finalize overall aggregates
+            if total_results['file_count'] > 0:
+                total_results['avg_score'] = (sum(r['score'] for r in total_results['files']) / len(total_results['files'])) if total_results['files'] else 0.0
+                total_results['overall_alignment'] = (total_results['total_aligned'] / total_results['total_rules'] * 100) if total_results['total_rules'] > 0 else 0.0
+                total_results['avg_processing_speed'] = total_results['total_code_size'] / total_results['total_analysis_time'] if total_results['total_analysis_time'] > 0 else 0.0
+            return total_results
+
+        # Analyze files (single run, with optional flush_every)
         file_results = []
         total_rules = 0
         total_aligned = 0
@@ -836,7 +978,9 @@ class QuickMultiLanguageAnalyzer:
                     output_dir: str = "results/multilang",
                     flush_every: int = 0,
                     workers: int = 1,
-                    per_file_timeout: int = 10) -> Dict:
+                    per_file_timeout: int = 10,
+                    max_files: Optional[int] = None,
+                    batch_size: int = 0) -> Dict:
         """Run analysis"""
         available_languages = self.get_available_languages()
         
@@ -860,7 +1004,7 @@ class QuickMultiLanguageAnalyzer:
         
         results = {}
         for language in target_languages:
-            result = self.analyze_language_files(code_dir, language, flush_every=flush_every, output_dir=output_dir, workers=workers, per_file_timeout=per_file_timeout)
+            result = self.analyze_language_files(code_dir, language, flush_every=flush_every, output_dir=output_dir, workers=workers, per_file_timeout=per_file_timeout, max_files=max_files, batch_size=batch_size)
             if result:
                 results[language] = result
         
@@ -1041,6 +1185,8 @@ def main():
     parser.add_argument('--flush_every', type=int, default=5000, help='Write a detailed report every N files to reduce memory usage (0=disable)')
     parser.add_argument('--workers', type=int, default=1, help='Number of worker processes for parallel analysis (1 = disable)')
     parser.add_argument('--per_file_timeout', type=int, default=10, help='Per-file analysis timeout in seconds (skip files exceeding this)')
+    parser.add_argument('--max_files', type=int, default=None, help='Maximum number of files to analyze (across this run)')
+    parser.add_argument('--batch_size', type=int, default=0, help='Analyze files in fixed-size batches (e.g., 5000) and save after each batch')
 
     # HuggingFace dataset options
     parser.add_argument('--hf_dataset', type=str, help='HuggingFace dataset name (e.g., bigcode/the-stack)')
@@ -1116,6 +1262,8 @@ def main():
                     flush_every=args.flush_every,
                     workers=args.workers,
                     per_file_timeout=args.per_file_timeout,
+                    max_files=args.max_files,
+                    batch_size=args.batch_size,
                 )
                 # Save simple per-language avg_score/overall_alignment for comparison
                 per_model_language_summary[mdl] = {
