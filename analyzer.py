@@ -50,6 +50,11 @@ def _worker_analyze_file(args: Tuple[str, str]) -> Optional[Dict[str, Any]]:
 
         with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
             code = f.read()
+        MAX_CODE_BYTES = 1 * 1024 * 1024
+        if len(code.encode('utf-8')) > MAX_CODE_BYTES:
+            signal.alarm(0) 
+            signal.signal(signal.SIGALRM, old_handler)
+            return None 
         if not code.strip():
             signal.alarm(0)
             signal.signal(signal.SIGALRM, old_handler)
@@ -257,13 +262,13 @@ class QuickMultiLanguageAnalyzer:
             try:
                 tokens = self.tokenizer.encode(code, add_special_tokens=False)
                 token_texts = [self.tokenizer.decode([token], clean_up_tokenization_spaces=False) for token in tokens]
-            except Exception as e:
-                print(f"Tokenization error: {e}")
-                return 0.0, {}
-
-            token_boundaries = []
-            current_pos = 0
-            for token_text in token_texts:
+        except Exception as e:
+            print(f"Tokenization error: {e}")
+            return 0.0, {}
+        
+        token_boundaries = []
+        current_pos = 0
+        for token_text in token_texts:
                 token_bytes = token_text.encode('utf-8')
                 if token_bytes.strip():
                     token_start = -1
@@ -271,11 +276,11 @@ class QuickMultiLanguageAnalyzer:
                         if code_bytes[i:i+len(token_bytes)] == token_bytes:
                             token_start = i
                             break
-                    if token_start != -1:
+            if token_start != -1:
                         token_end = token_start + len(token_bytes)
-                        token_boundaries.append((token_start, token_end))
-                        current_pos = token_end
-                    else:
+                token_boundaries.append((token_start, token_end))
+                current_pos = token_end
+            else:
                         token_boundaries.append((current_pos, min(current_pos + 1, len(code_bytes))))
                         current_pos = min(current_pos + 1, len(code_bytes))
                 else:
@@ -304,7 +309,7 @@ class QuickMultiLanguageAnalyzer:
                     utf16_index += units
             except Exception:
                 byte_to_utf16_index = None
-
+        
         # Calculate alignment
         aligned_rules = 0
         rule_details = {}
@@ -346,7 +351,7 @@ class QuickMultiLanguageAnalyzer:
         """Deprecated: replaced by top-level worker function for pickling safety."""
         return _worker_analyze_file(args_tuple)
 
-    def analyze_language_files(self, code_dir: str, language: str, flush_every: int = 0, output_dir: str = "results/multilang", workers: int = 1, per_file_timeout: int = 10, max_files: Optional[int] = None, batch_size: int = 0) -> Dict:
+    def analyze_language_files(self, code_dir: str, language: str, flush_every: int = 0, output_dir: str = "results/multilang", workers: int = 1, per_file_timeout: int = 10, max_files: Optional[int] = None, batch_size: int = 0, start_index: int = 0) -> Dict:
         """Analyze all files for a specific language.
 
         Supports two layouts:
@@ -358,7 +363,7 @@ class QuickMultiLanguageAnalyzer:
         if language not in self.parsers:
             print(f"Skipping unsupported language: {language}")
             return {}
-
+        
         base_path = Path(code_dir)
         extensions = self.language_configs[language]['extensions']
 
@@ -377,22 +382,30 @@ class QuickMultiLanguageAnalyzer:
             search_root = language_dir if language_dir.exists() else base_path
 
             # Recursively gather files by extension from preferred root
-            for ext in extensions:
+        for ext in extensions:
                 code_files.extend(search_root.rglob(f"*{ext}"))
 
             # Fallback: if language_dir exists but yielded no files, also scan base_path recursively
             if not code_files and language_dir.exists():
                 for ext in extensions:
                     code_files.extend(base_path.rglob(f"*{ext}"))
-
+        
         if not code_files:
             print(f"No {language} files found under {base_path}")
             return {}
         
-        # If max_files specified, limit the total number of files to analyze
-        if max_files is not None and max_files > 0:
-            code_files = code_files[:max_files]
-
+        # Support resume from a specific index (0-based)
+        if start_index and start_index > 0:
+            if max_files is not None and max_files > 0:
+                code_files = code_files[start_index:start_index + max_files]
+            else:
+                code_files = code_files[start_index:]
+            print(f"Resuming from index {start_index}, remaining files: {len(code_files)}")
+        else:
+            # If max_files specified, limit the total number of files to analyze
+            if max_files is not None and max_files > 0:
+                code_files = code_files[:max_files]
+        
         print(f"\nAnalyzing {language.upper()} ({len(code_files)} files)")
         print("-" * 50)
         
@@ -418,10 +431,10 @@ class QuickMultiLanguageAnalyzer:
                 part_idx += 1
 
                 # Reuse the core processing path but scoped to this batch
-                file_results = []
-                total_rules = 0
-                total_aligned = 0
-                total_code_size = 0
+        file_results = []
+        total_rules = 0
+        total_aligned = 0
+        total_code_size = 0
                 batch_start_time = time.time()
 
                 def process_collected_batch(batch_results):
@@ -457,16 +470,16 @@ class QuickMultiLanguageAnalyzer:
                     results_local = []
                     for file_path in tqdm(batch, desc=f"Analyzing {language}", unit="files"):
                         # serial process single file
-                        try:
-                            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                                code = f.read()
-                            if not code.strip():
-                                continue
-                            code_size = len(code)
-                            file_start_time = time.time()
-                            score, details = self.calculate_rule_level_alignment(code, language)
-                            file_analysis_time = time.time() - file_start_time
-                            aligned_count = sum(1 for d in details.values() if d['fully_aligned'])
+            try:
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    code = f.read()
+                if not code.strip():
+                    continue
+                code_size = len(code)
+                file_start_time = time.time()
+                score, details = self.calculate_rule_level_alignment(code, language)
+                file_analysis_time = time.time() - file_start_time
+                aligned_count = sum(1 for d in details.values() if d['fully_aligned'])
                             unaligned_rules_list = [
                                 {
                                     'rule_key': rk,
@@ -481,16 +494,16 @@ class QuickMultiLanguageAnalyzer:
                                 for rk, rd in details.items() if not rd.get('fully_aligned')
                             ]
                             results_local.append({
-                                'file': file_path.name,
+                    'file': file_path.name,
                                 'path': str(file_path),
-                                'score': score,
-                                'total_rules': len(details),
-                                'aligned_rules': aligned_count,
+                    'score': score,
+                    'total_rules': len(details),
+                    'aligned_rules': aligned_count,
                                 'unaligned_rules': unaligned_rules_list,
-                                'code_size': code_size,
-                                'analysis_time': file_analysis_time,
-                                'processing_speed': code_size / file_analysis_time if file_analysis_time > 0 else 0
-                            })
+                    'code_size': code_size,
+                    'analysis_time': file_analysis_time,
+                    'processing_speed': code_size / file_analysis_time if file_analysis_time > 0 else 0
+                })
                         except Exception:
                             pass
                     process_collected_batch(results_local)
@@ -712,7 +725,7 @@ class QuickMultiLanguageAnalyzer:
             }
 
             self._save_results({language: language_chunk_result}, [], output_dir, chunk_total_time, suffix=f"_{language}_part_{chunk_idx}")
-
+        
         return result
 
     def analyze_hf_dataset(
@@ -980,7 +993,8 @@ class QuickMultiLanguageAnalyzer:
                     workers: int = 1,
                     per_file_timeout: int = 10,
                     max_files: Optional[int] = None,
-                    batch_size: int = 0) -> Dict:
+                    batch_size: int = 0,
+                    start_index: int = 0) -> Dict:
         """Run analysis"""
         available_languages = self.get_available_languages()
         
@@ -1004,7 +1018,7 @@ class QuickMultiLanguageAnalyzer:
         
         results = {}
         for language in target_languages:
-            result = self.analyze_language_files(code_dir, language, flush_every=flush_every, output_dir=output_dir, workers=workers, per_file_timeout=per_file_timeout, max_files=max_files, batch_size=batch_size)
+            result = self.analyze_language_files(code_dir, language, flush_every=flush_every, output_dir=output_dir, workers=workers, per_file_timeout=per_file_timeout, max_files=max_files, batch_size=batch_size, start_index=start_index)
             if result:
                 results[language] = result
         
@@ -1187,6 +1201,7 @@ def main():
     parser.add_argument('--per_file_timeout', type=int, default=10, help='Per-file analysis timeout in seconds (skip files exceeding this)')
     parser.add_argument('--max_files', type=int, default=None, help='Maximum number of files to analyze (across this run)')
     parser.add_argument('--batch_size', type=int, default=0, help='Analyze files in fixed-size batches (e.g., 5000) and save after each batch')
+    parser.add_argument('--start_index', type=int, default=0, help='Resume offset: 0-based file index to start from (e.g., 190000)')
 
     # HuggingFace dataset options
     parser.add_argument('--hf_dataset', type=str, help='HuggingFace dataset name (e.g., bigcode/the-stack)')
@@ -1233,27 +1248,27 @@ def main():
 
             analyzer = QuickMultiLanguageAnalyzer(model_name=mdl, emit_utf16_offsets=args.emit_utf16)
 
-            if args.hf_dataset:
+        if args.hf_dataset:
                 _ = analyzer.analyze_hf_dataset(
-                    dataset_name=args.hf_dataset,
-                    split=args.hf_split,
-                    text_column=args.hf_text_column,
-                    dataset_config=args.hf_config,
-                    fixed_language=args.hf_language,
-                    language_field=args.hf_language_field,
-                    limit=args.hf_limit,
-                    streaming=args.hf_streaming,
-                    use_auth_token=args.hf_token,
-                    output_dir=args.output_dir,
+                dataset_name=args.hf_dataset,
+                split=args.hf_split,
+                text_column=args.hf_text_column,
+                dataset_config=args.hf_config,
+                fixed_language=args.hf_language,
+                language_field=args.hf_language_field,
+                limit=args.hf_limit,
+                streaming=args.hf_streaming,
+                use_auth_token=args.hf_token,
+                output_dir=args.output_dir,
                     flush_every=args.flush_every,
-                )
+            )
+        else:
+            if args.language:
+                target_languages = [args.language]
+            elif args.all_languages:
+                target_languages = None  # Analyze all available languages
             else:
-                if args.language:
-                    target_languages = [args.language]
-                elif args.all_languages:
-                    target_languages = None  # Analyze all available languages
-                else:
-                    target_languages = ['python']  # Default to analyzing only Python
+                target_languages = ['python']  # Default to analyzing only Python
 
                 run_results = analyzer.run_analysis(
                     args.code_dir,
@@ -1264,6 +1279,7 @@ def main():
                     per_file_timeout=args.per_file_timeout,
                     max_files=args.max_files,
                     batch_size=args.batch_size,
+                    start_index=args.start_index,
                 )
                 # Save simple per-language avg_score/overall_alignment for comparison
                 per_model_language_summary[mdl] = {

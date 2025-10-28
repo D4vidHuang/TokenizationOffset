@@ -14,8 +14,8 @@ mkdir -p ${LOGS_DIR}
 # 实验参数
 # 注意：串行执行时，你可以考虑将 workers 设为 128 来加速单个任务。
 # =======================================================
-MODELS="gpt2 bert-base-uncased roberta-base"
-COMMON_ARGS="--workers 128 --flush_every 5000 --emit_utf16" 
+MODELS="gpt2 roberta-base bert-base-uncased"
+COMMON_ARGS="--workers 128 --per_file_timeout 10 --batch_size 10000 --max_files 1000000" 
 
 # =======================================================
 # 定义执行函数
@@ -57,7 +57,7 @@ run_analysis() {
 # 1. Python
 run_analysis "python" \
     "${BASE_DIR}/python_aise_code_output" \
-    "${OUTPUT_ROOT}/PythonRES"
+    "${BASE_DIR}/pythonResNew"
 
 # 2. Java
 run_analysis "java" \
