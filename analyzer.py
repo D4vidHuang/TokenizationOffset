@@ -20,14 +20,16 @@ warnings.filterwarnings('ignore')
 import concurrent.futures
 import multiprocessing
 from typing import Any
+import signal
 
 # Global worker analyzer for process pool
 WORKER_ANALYZER: Optional["QuickMultiLanguageAnalyzer"] = None
 
-def _worker_init(model_name: str, emit_utf16: bool):
+def _worker_init(model_name: str, emit_utf16: bool, target_language: str):
     global WORKER_ANALYZER
     try:
-        WORKER_ANALYZER = QuickMultiLanguageAnalyzer(model_name=model_name, emit_utf16_offsets=emit_utf16)
+        os.environ.setdefault('TOKENIZERS_PARALLELISM', 'false')
+        WORKER_ANALYZER = QuickMultiLanguageAnalyzer(model_name=model_name, emit_utf16_offsets=emit_utf16, allowed_languages=[target_language])
     except Exception:
         WORKER_ANALYZER = None
 
@@ -39,13 +41,24 @@ def _worker_analyze_file(args: Tuple[str, str]) -> Optional[Dict[str, Any]]:
     if WORKER_ANALYZER is None:
         return None
     try:
+        # timeout support per file (Unix)
+        def _timeout_handler(signum, frame):
+            raise TimeoutError("per-file timeout")
+        old_handler = signal.signal(signal.SIGALRM, _timeout_handler)
+        timeout_secs = int(os.environ.get('ANALYZER_PER_FILE_TIMEOUT', '10'))
+        signal.alarm(max(1, timeout_secs))
+
         with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
             code = f.read()
         if not code.strip():
+            signal.alarm(0)
+            signal.signal(signal.SIGALRM, old_handler)
             return None
         code_size = len(code)
         file_start_time = time.time()
         score, details = WORKER_ANALYZER.calculate_rule_level_alignment(code, language)
+        signal.alarm(0)
+        signal.signal(signal.SIGALRM, old_handler)
         file_analysis_time = time.time() - file_start_time
         aligned_count = sum(1 for d in details.values() if d['fully_aligned'])
         unaligned_rules_list = [
@@ -72,16 +85,24 @@ def _worker_analyze_file(args: Tuple[str, str]) -> Optional[Dict[str, Any]]:
             'analysis_time': file_analysis_time,
             'processing_speed': code_size / file_analysis_time if file_analysis_time > 0 else 0
         }
+    except TimeoutError:
+        try:
+            signal.alarm(0)
+            signal.signal(signal.SIGALRM, old_handler)
+        except Exception:
+            pass
+        return None
     except Exception:
         return None
 
 class QuickMultiLanguageAnalyzer:
     """Quick Multilingual Analyzer - Using compiled libraries"""
     
-    def __init__(self, model_name: str = "gpt2", emit_utf16_offsets: bool = False):
+    def __init__(self, model_name: str = "gpt2", emit_utf16_offsets: bool = False, allowed_languages: Optional[List[str]] = None):
         self.model_name = model_name
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.emit_utf16_offsets = emit_utf16_offsets
+        self.allowed_languages = set(allowed_languages) if allowed_languages else None
         
         # Language configurations
         self.language_configs = {
@@ -137,8 +158,10 @@ class QuickMultiLanguageAnalyzer:
         
         print("Loading compiled language libraries...")
         
-        # Try to initialize each language
+        # Try to initialize each language (respect allowed_languages if provided)
         for lang_name, config in self.language_configs.items():
+            if self.allowed_languages is not None and lang_name not in self.allowed_languages:
+                continue
             try:
                 # Find corresponding language library file
                 possible_paths = [
@@ -323,7 +346,7 @@ class QuickMultiLanguageAnalyzer:
         """Deprecated: replaced by top-level worker function for pickling safety."""
         return _worker_analyze_file(args_tuple)
 
-    def analyze_language_files(self, code_dir: str, language: str, flush_every: int = 0, output_dir: str = "results/multilang", workers: int = 1) -> Dict:
+    def analyze_language_files(self, code_dir: str, language: str, flush_every: int = 0, output_dir: str = "results/multilang", workers: int = 1, per_file_timeout: int = 10) -> Dict:
         """Analyze all files for a specific language.
 
         Supports two layouts:
@@ -417,9 +440,17 @@ class QuickMultiLanguageAnalyzer:
 
         if workers and workers > 1:
             max_workers = workers if workers > 0 else (multiprocessing.cpu_count() or 1)
-            with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers, initializer=_worker_init, initargs=(self.model_name, self.emit_utf16_offsets)) as ex:
+            mp_ctx = multiprocessing.get_context('spawn')
+            with concurrent.futures.ProcessPoolExecutor(
+                max_workers=max_workers,
+                mp_context=mp_ctx,
+                initializer=_worker_init,
+                initargs=(self.model_name, self.emit_utf16_offsets, language)
+            ) as ex:
+                # pass timeout to workers via env
+                os.environ['ANALYZER_PER_FILE_TIMEOUT'] = str(max(1, int(per_file_timeout)))
                 # map returns in order; use chunksize for throughput
-                batch_iter = ex.map(_worker_analyze_file, [(str(p), language) for p in code_files], chunksize=16)
+                batch_iter = ex.map(_worker_analyze_file, ((str(p), language) for p in code_files), chunksize=64)
                 # consume in minibatches for reduced overhead
                 buf = []
                 for res in tqdm(batch_iter, desc=f"Analyzing {language}", unit="files"):
@@ -432,7 +463,48 @@ class QuickMultiLanguageAnalyzer:
         else:
             results = []
             for file_path in tqdm(code_files, desc=f"Analyzing {language}", unit="files"):
-                results.append(self._analyze_single_file((str(file_path), language)))
+                # serial path: best-effort timeout using monotonic time check
+                start_t = time.time()
+                try:
+                    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                        code = f.read()
+                    if not code.strip():
+                        continue
+                    code_size = len(code)
+                    file_start_time = time.time()
+                    score, details = self.calculate_rule_level_alignment(code, language)
+                    file_analysis_time = time.time() - file_start_time
+                    aligned_count = sum(1 for d in details.values() if d['fully_aligned'])
+                    unaligned_rules_list = [
+                        {
+                            'rule_key': rk,
+                            'type': rd.get('type'),
+                            'start_byte': rd.get('start_byte'),
+                            'end_byte': rd.get('end_byte'),
+                            'start_aligned': rd.get('start_aligned'),
+                            'end_aligned': rd.get('end_aligned'),
+                            'fully_aligned': rd.get('fully_aligned'),
+                            'text_preview': rd.get('text_preview')
+                        }
+                        for rk, rd in details.items() if not rd.get('fully_aligned')
+                    ]
+                    results.append({
+                        'file': file_path.name,
+                        'path': str(file_path),
+                        'score': score,
+                        'total_rules': len(details),
+                        'aligned_rules': aligned_count,
+                        'unaligned_rules': unaligned_rules_list,
+                        'code_size': code_size,
+                        'analysis_time': file_analysis_time,
+                        'processing_speed': code_size / file_analysis_time if file_analysis_time > 0 else 0
+                    })
+                except Exception:
+                    pass
+                finally:
+                    if time.time() - start_t > per_file_timeout:
+                        # skip this file if took too long
+                        continue
                 if len(results) >= 256:
                     process_collected(results)
                     results = []
@@ -763,7 +835,8 @@ class QuickMultiLanguageAnalyzer:
                     target_languages: List[str] = None, 
                     output_dir: str = "results/multilang",
                     flush_every: int = 0,
-                    workers: int = 1) -> Dict:
+                    workers: int = 1,
+                    per_file_timeout: int = 10) -> Dict:
         """Run analysis"""
         available_languages = self.get_available_languages()
         
@@ -787,7 +860,7 @@ class QuickMultiLanguageAnalyzer:
         
         results = {}
         for language in target_languages:
-            result = self.analyze_language_files(code_dir, language, flush_every=flush_every, output_dir=output_dir, workers=workers)
+            result = self.analyze_language_files(code_dir, language, flush_every=flush_every, output_dir=output_dir, workers=workers, per_file_timeout=per_file_timeout)
             if result:
                 results[language] = result
         
@@ -967,6 +1040,7 @@ def main():
     parser.add_argument('--avg_file_size', type=float, default=0, help='Average file size for estimation (bytes)')
     parser.add_argument('--flush_every', type=int, default=5000, help='Write a detailed report every N files to reduce memory usage (0=disable)')
     parser.add_argument('--workers', type=int, default=1, help='Number of worker processes for parallel analysis (1 = disable)')
+    parser.add_argument('--per_file_timeout', type=int, default=10, help='Per-file analysis timeout in seconds (skip files exceeding this)')
 
     # HuggingFace dataset options
     parser.add_argument('--hf_dataset', type=str, help='HuggingFace dataset name (e.g., bigcode/the-stack)')
@@ -1035,7 +1109,14 @@ def main():
                 else:
                     target_languages = ['python']  # Default to analyzing only Python
 
-                run_results = analyzer.run_analysis(args.code_dir, target_languages, args.output_dir, flush_every=args.flush_every, workers=args.workers)
+                run_results = analyzer.run_analysis(
+                    args.code_dir,
+                    target_languages,
+                    args.output_dir,
+                    flush_every=args.flush_every,
+                    workers=args.workers,
+                    per_file_timeout=args.per_file_timeout,
+                )
                 # Save simple per-language avg_score/overall_alignment for comparison
                 per_model_language_summary[mdl] = {
                     lang: {
