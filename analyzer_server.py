@@ -229,8 +229,7 @@ class QuickMultiLanguageAnalyzer:
                 rules.append({
                     'type': node.type,
                     'start_byte': node.start_byte,
-                    'end_byte': node.end_byte,
-                    'text': code_bytes[node.start_byte:node.end_byte].decode('utf-8', errors='ignore')[:50]
+                    'end_byte': node.end_byte
                 })
             
             for child in node.children:
@@ -242,7 +241,6 @@ class QuickMultiLanguageAnalyzer:
         
         # Tokenization with reliable offsets (prefer fast tokenizer offset_mapping)
         token_boundaries = []
-        code_bytes = code.encode('utf-8')
         token_source = 'offset_mapping'
         try:
             encoding = self.tokenizer(
@@ -402,58 +400,63 @@ class QuickMultiLanguageAnalyzer:
             
             rule_key = f"{rule['type']}_{rule['start_byte']}_{rule['end_byte']}"
 
-            start_cross_info = _find_containing_token(rule_start)
-            end_cross_info = _find_containing_token(rule_end)
-
+            # Only compute token context if boundary splits a word
             crossing_start_reason = None
             token_start_context = None
-            if start_cross_info is not None:
-                s_idx, s_tb, s_te = start_cross_info
-                s_text = code_bytes[s_tb:s_te].decode('utf-8', errors='ignore')
-                token_start_context = {
-                    'token_index': s_idx,
-                    'token_start': s_tb,
-                    'token_end': s_te,
-                    'token_text_preview': s_text[:50]
-                }
-                if crossing_start:
-                    left = prev_ch_s if prev_ch_s is not None else ''
-                    right = curr_ch_s if curr_ch_s is not None else ''
-                    crossing_start_reason = f"rule.start_byte={rule_start} splits word between '{left}' and '{right}'"
+            if crossing_start:
+                start_cross_info = _find_containing_token(rule_start)
+                if start_cross_info is not None:
+                    s_idx, s_tb, s_te = start_cross_info
+                    s_text = code_bytes[s_tb:s_te].decode('utf-8', errors='ignore')
+                    token_start_context = {
+                        'token_index': s_idx,
+                        'token_start': s_tb,
+                        'token_end': s_te,
+                        'token_text_preview': s_text[:50]
+                    }
+                left = prev_ch_s if prev_ch_s is not None else ''
+                right = curr_ch_s if curr_ch_s is not None else ''
+                crossing_start_reason = f"rule.start_byte={rule_start} splits word between '{left}' and '{right}'"
 
             crossing_end_reason = None
             token_end_context = None
-            if end_cross_info is not None:
-                e_idx, e_tb, e_te = end_cross_info
-                e_text = code_bytes[e_tb:e_te].decode('utf-8', errors='ignore')
-                token_end_context = {
-                    'token_index': e_idx,
-                    'token_start': e_tb,
-                    'token_end': e_te,
-                    'token_text_preview': e_text[:50]
-                }
-                if crossing_end:
-                    left = prev_ch_e if prev_ch_e is not None else ''
-                    right = curr_ch_e if curr_ch_e is not None else ''
-                    crossing_end_reason = f"rule.end_byte={rule_end} splits word between '{left}' and '{right}'"
+            if crossing_end:
+                end_cross_info = _find_containing_token(rule_end)
+                if end_cross_info is not None:
+                    e_idx, e_tb, e_te = end_cross_info
+                    e_text = code_bytes[e_tb:e_te].decode('utf-8', errors='ignore')
+                    token_end_context = {
+                        'token_index': e_idx,
+                        'token_start': e_tb,
+                        'token_end': e_te,
+                        'token_text_preview': e_text[:50]
+                    }
+                left = prev_ch_e if prev_ch_e is not None else ''
+                right = curr_ch_e if curr_ch_e is not None else ''
+                crossing_end_reason = f"rule.end_byte={rule_end} splits word between '{left}' and '{right}'"
 
-            details_entry = {
-                'type': rule['type'],
-                'start_byte': rule['start_byte'],
-                'end_byte': rule['end_byte'],
-                'start_aligned': start_aligned,
-                'end_aligned': end_aligned,
-                'crossing_start': crossing_start,
-                'crossing_end': crossing_end,
-                'crossing_start_reason': crossing_start_reason,
-                'crossing_end_reason': crossing_end_reason,
-                'token_start_context': token_start_context,
-                'token_end_context': token_end_context,
-                'fully_aligned': fully_aligned,
-                'text_preview': rule['text'][:50],
-                'explain_tree_sitter': f"Tree-sitter node '{rule['type']}' spans bytes [{rule_start}, {rule_end}) from node.start_byte/end_byte.",
-                'explain_tokenizer': f"Token boundaries derived via {token_source}; offsets mapped to UTF-8 byte positions.",
-            }
+            if fully_aligned:
+                details_entry = {
+                    'fully_aligned': True
+                }
+            else:
+                details_entry = {
+                    'type': rule['type'],
+                    'start_byte': rule['start_byte'],
+                    'end_byte': rule['end_byte'],
+                    'start_aligned': start_aligned,
+                    'end_aligned': end_aligned,
+                    'crossing_start': crossing_start,
+                    'crossing_end': crossing_end,
+                    'crossing_start_reason': crossing_start_reason,
+                    'crossing_end_reason': crossing_end_reason,
+                    'token_start_context': token_start_context,
+                    'token_end_context': token_end_context,
+                    'fully_aligned': False,
+                    'text_preview': code_bytes[rule_start:rule_end].decode('utf-8', errors='ignore')[:50],
+                    'explain_tree_sitter': f"Tree-sitter node '{rule['type']}' spans bytes [{rule_start}, {rule_end}) from node.start_byte/end_byte.",
+                    'explain_tokenizer': f"Token boundaries derived via {token_source}; offsets mapped to UTF-8 byte positions.",
+                }
             if byte_to_utf16_index is not None:
                 sb = rule['start_byte']
                 eb = rule['end_byte']
